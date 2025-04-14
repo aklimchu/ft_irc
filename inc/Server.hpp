@@ -5,8 +5,8 @@
 #include <sys/socket.h>
 #include <cstring> // for memset
 #include <netinet/in.h> // for sockaddr_in, htons
-#include <errno.h>
-
+// #include <errno.h>
+#include <unistd.h> // for close
 
 class Server {
 	public:

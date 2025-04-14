@@ -24,6 +24,12 @@ int Server::initServer(void) {
 		return(1);
 	}
 
+	while (1)  {
+		//accept or poll
+	}
+
+	close(sockfd);
+
 	return 0;
 }
 
