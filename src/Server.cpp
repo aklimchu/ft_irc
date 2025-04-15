@@ -1,5 +1,23 @@
 #include "Server.hpp"
 
+bool Server::signal_received = false;
+
+Server::Server() : sockfd(-1) {}
+
+void Server::handleSignals(int num) {
+	(void)num;
+	
+	Server::signal_received = true;
+	std::cout << std::endl << "Signal received" << std::endl;
+}
+
+void Server::closeFds(void) {
+	if (this->sockfd != -1) {
+		close(this->sockfd);
+	// close client fds
+	}
+}
+
 void Server::initServer(void) {
 	struct sockaddr_in sockaddr;
 
@@ -19,28 +37,10 @@ void Server::initServer(void) {
 		throw ListeningError();
 	}
 
-	//while (1)  {
-		//accept or poll
-		//or poll always
-	//}
+	while (!this->signal_received)  {
+		//accept and poll
+	}
 
-	close(this->sockfd);
 }
 
 void Server::startServer(void) {}
-
-int main (int argc, char *argv[]) {
-	Server irc_server;
-		
-	/* if (argc < 3 || argc > 3)
-		std::cout << "Wrong number of arguments" << std::endl; */
-	(void)argv;
-	(void)argc;
-	try {
-		irc_server.initServer();
-		irc_server.startServer();
-	}
-	catch (std::exception & e) {
-		std::cerr << e.what() << std::endl;
-	}
-}

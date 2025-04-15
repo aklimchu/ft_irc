@@ -13,7 +13,8 @@ RM			= rm -f
 RMDIR		= rm -rf
 
 # Source / OBJ files / Includes
-SRC 		=	src/Server.cpp
+SRC 		=	src/Server.cpp \
+				src/main.cpp
 OBJ 		= $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 OBJ_DIR		= obj
 INCLUDE		= -I "./inc"

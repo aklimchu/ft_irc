@@ -7,13 +7,14 @@
 #include <netinet/in.h> // for sockaddr_in, htons
 // #include <errno.h>
 #include <unistd.h> // for close
+#include <signal.h>
 
 #define BACKLOG 10
 #define PORT 8888
 
 class Server {
 	public:
-		Server(void) = default;
+		Server(void);
 		Server(Server & src) = delete;
 
 		~Server(void) = default;
@@ -22,6 +23,8 @@ class Server {
 
 		void initServer(void);
 		void startServer(void);
+		void closeFds(void);
+		static void handleSignals(int num);
 
 		class SocketError : public std::exception {
 			public:
@@ -46,4 +49,5 @@ class Server {
 
 	private:
 		int sockfd;
+		static bool signal_received;
 };
