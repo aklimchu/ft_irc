@@ -28,6 +28,7 @@ int Server::initServer(void) {
 
 	while (1)  {
 		//accept or poll
+		//or poll always
 	}
 
 	close(sockfd);
