@@ -9,6 +9,11 @@
 #include <unistd.h> // for close
 #include <signal.h>
 
+#include <vector>
+#include <fcntl.h>
+#include <map>
+#include "Client.hpp"
+
 #define BACKLOG 10
 #define PORT 8888
 
@@ -25,6 +30,10 @@ class Server {
 		void startServer(void);
 		void closeFds(void);
 		static void handleSignals(int num);
+
+		void	setNonBlock(int fd);
+		void	handleNewClient();
+		void	handleOldClient(size_t &i);
 
 		class SocketError : public std::exception {
 			public:
@@ -50,4 +59,7 @@ class Server {
 	private:
 		int sockfd;
 		static bool signal_received;
+
+		std::vector<pollfd>		pollFds;
+		std::map<int, Client>	clients;
 };
