@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+//Comment
+
 int Server::initServer(void) {
 	int sockfd;
 	struct sockaddr_in sockaddr;
