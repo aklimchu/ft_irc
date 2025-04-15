@@ -7,7 +7,7 @@ int Server::initServer(void) {
 	struct sockaddr_in sockaddr;
 
 	if (((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)) {
-		std::cout << "Error while creating the socket" << std::endl;
+		std::cout << "Comment made by Johan" << std::endl;
 		return(1);
 	}
 
