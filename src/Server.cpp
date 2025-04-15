@@ -11,7 +11,7 @@ int Server::initServer(void) {
 
 	std::memset(&sockaddr, 0, sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(8888);
+	sockaddr.sin_port = htons(8888); // can take from argv
 	sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (((bind(sockfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr))) < 0)) {
