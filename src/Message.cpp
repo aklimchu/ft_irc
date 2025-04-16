@@ -2,7 +2,9 @@
 
 //--------------------------------Constructors--------------------------------//
 
-Message::Message(std::string buffer) : _buffer(buffer) {}
+Message::Message(std::string buffer) : _buffer(buffer), _sender("SenderX"), \
+	_command("Unknown") {
+}
 
 //-------------------------------Member functions------------------------------//
 
@@ -21,29 +23,25 @@ std::vector<std::string> Message::ft_split(std::string & line, const char & sep)
 }
 
 int Message::parseBuffer(void) {
-	std::string nptr = NULL;
 
-	if (_buffer == nptr || std::size(_buffer) == 0) // \r, \n symbols?
+	if (std::size(_buffer) == 0) // \r, \n symbols?
 		return -1;
 	_buffer_divided = ft_split(_buffer, ' '); // do we need to explicitly delete?
-	int i;
-	for (i = 0; i < _functions.size(); i++) {
+	for (size_t i = 0; i < _function_names.size(); i++) {
 		if (this->_buffer_divided[0] == this->_function_names[i]) // how about MODE + flag?
-			this->_command_called = this->_function_names[i];
+			this->_command = this->_function_names[i];
 	}
-	if (i == _functions.size())
-		return -1;
 	return 0;
 }
 
-void Message::callCommand(void) {
-	//checking user permissions before executing the command?
-	std::string nptr = NULL;
-	
-	if (this->_command_called == nptr)
-		return;
-	for (int i = 0; i < _functions.size(); i++) {
-		if (this->_command_called == this->_function_names[i]) // how about MODE + flag?
-			this->_functions[i](_buffer_divided, _sender);
-	}
+std::string & Message::getCommand(void) {
+	return(this->_command);
+}
+
+std::string & Message::getSender(void) {
+	return(this->_sender);
+}
+
+std::vector<std::string> & Message::getBufferDivided(void) {
+	return(this->_buffer_divided);
 }

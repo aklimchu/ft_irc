@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include "Client.hpp"
-#include "commands.hpp"
 
 class Message {
 	public:
@@ -16,7 +15,9 @@ class Message {
 
 		std::vector<std::string> ft_split(std::string & line, const char & sep);
 		int parseBuffer(void);
-		void callCommand(void);
+		std::string& getCommand(void);
+		std::string& getSender(void);
+		std::vector<std::string>& getBufferDivided(void);
 
 	private:
 		std::string _buffer;
@@ -24,10 +25,8 @@ class Message {
 		std::string _sender;
 		std::string _receiver;
 		// payload
-		std::string _command_called;
-		const std::vector<void(*)(std::vector<std::string> &, std::string &)> _functions = \
-			{pass, nick, user, join, part, topic, invite, kick, quit, mode, privmsg, leave};
+		std::string _command;
 		const std::vector<std::string> _function_names = \
 			{"PASS", "NICK", "USER", "JOIN", "PART", "TOPIC", "INVITE", \
-			"KICK", "QUIT", "MODE", "PRIVMSG", "LEAVE"};
+			"KICK", "QUIT", "MODE", "PRIVMSG"};
 };

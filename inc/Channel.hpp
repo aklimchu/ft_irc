@@ -14,10 +14,10 @@ class Channel {
 
 		
 		private:
-			std::vector<Client*>		_operator;
+			/* std::vector<Client*>		_operator;
 			std::vector<Client*>		_users;
 			std::vector<Client*>		_invite;
 			std::vector<Client*>		_voice;
 			size_t						_user_limit;
-			std::string					_password;
+			std::string					_password; */
 };
