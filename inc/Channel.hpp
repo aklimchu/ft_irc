@@ -18,6 +18,6 @@ class Channel {
 			// std::vector<Client*>		users;
 			// std::vector<Client*>		invite;
 			// std::vector<Client*>		voice;
-			size_t						user_limit;
-			std::string					password;
+			size_t						_user_limit;
+			std::string					_password;
 };
