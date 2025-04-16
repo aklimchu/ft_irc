@@ -25,7 +25,7 @@ class	Client
 		const std::string	&getUsername() const;
 		const std::string	&getNickname() const;
 		const std::string	&getRealname() const;
-		const std::string	&getBuffer() const;
+		/*const*/ std::string	&getBuffer() /*const*/;
 		bool				isRegistered() const;
 		bool				isPasswdOK() const;
 

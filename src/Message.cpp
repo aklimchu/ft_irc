@@ -45,3 +45,8 @@ std::string & Message::getSender(void) {
 std::vector<std::string> & Message::getBufferDivided(void) {
 	return(this->_buffer_divided);
 }
+
+void	Message::setSender(const std::string &sender)
+{
+	this->_sender = sender;
+}

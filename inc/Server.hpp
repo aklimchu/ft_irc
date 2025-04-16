@@ -37,9 +37,12 @@ class Server {
 		static void handleSignals(int num);
 		void	setNonBlock(int fd);
 
-		void	executeCommand(std::string buffer);
+		//void	executeCommand(std::string buffer);
+		void	executeCommand(const std::string &buffer, Client &client);
 		void	handleNewClient();
 		void	handleOldClient(size_t &i);
+		//void	handleClientsLine(const std::string &line, Client &client);
+
 		void	pass(Message & message);
 		void	nick(Message & message);
 		void	user(Message & message);

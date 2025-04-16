@@ -19,6 +19,8 @@ class Message {
 		std::string& getSender(void);
 		std::vector<std::string>& getBufferDivided(void);
 
+		void	setSender(const std::string &sender);
+
 	private:
 		std::string _buffer;
 		std::vector<std::string> _buffer_divided;

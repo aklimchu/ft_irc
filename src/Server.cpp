@@ -56,6 +56,22 @@ void Server::initServer(void) {
 
 }
 
+/*void	Server::handleClientsLine(const std::string &line, Client &client)
+{
+	std::string	sender = client.getNickname();
+	if (sender.empty())
+		sender = ":" + std::to_string(client.getFd());
+
+	Message msg(line);
+	msg.setSender(sender);
+
+	if (msg.parseBuffer() == 0)
+		msg.callCommand();
+	else
+		std::cerr << "Invalid command: " << line << std::endl;
+}*/
+
+
 void	Server::handleNewClient()
 {
 	int	client_socket = accept(this->sockfd, NULL, NULL);
@@ -92,7 +108,25 @@ void	Server::handleOldClient(size_t &i)
 	else // Incoming data
 	{
 		std::cout << "Data received:" << buffer << std::endl;
-		this->executeCommand(buffer);
+
+		Client	&client = this->clients[this->pollFds[i].fd];
+		client.appendBuffer(buffer);
+
+		std::string	&buf = client.getBuffer();
+		size_t		pos;
+
+		while((pos = buf.find("\r\n")) != std::string::npos)
+		{
+			std::string	line = buf.substr(0, pos);
+			buf.erase(0, pos + 2);
+
+			std::cout << "Parsed line: " << line << std::endl;
+
+			//this->handleClientsLine(line, client);
+			this->executeCommand(line, client);
+		}
+
+		//this->executeCommand(buffer);
 	}
 }
 
@@ -124,7 +158,27 @@ void Server::startServer(void)
 	}
 }
 
-void	Server::executeCommand(std::string buffer) {
+void	Server::executeCommand(const std::string &buffer, Client &client)
+{
+	Message message_received = Message(buffer);
+
+	std::string sender = client.getNickname();
+	if (sender.empty()) {
+		sender = ":" + std::to_string(client.getFd());
+	}
+	message_received.setSender(sender);
+
+	if (message_received.parseBuffer() == -1)
+		return;
+	auto it = _command_map.find(message_received.getCommand());
+    if (it != _command_map.end()) {
+        (this->*(it->second))(message_received);
+    } else {
+        std::cerr << "Unknown command: " << message_received.getSender() << std::endl << std::endl;
+    }
+}
+
+/*void	Server::executeCommand(std::string buffer) {
 	Message message_received = Message(buffer);
 	
 	if (message_received.parseBuffer() == -1)
@@ -135,7 +189,7 @@ void	Server::executeCommand(std::string buffer) {
     } else {
         std::cerr << "Unknown command: " << message_received.getSender() << std::endl << std::endl;
     }
-}
+}*/
 
 void Server::pass(Message & message) {
 	// Numeric Replies:
