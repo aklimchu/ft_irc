@@ -8,14 +8,17 @@ NAME		= ircserv
 
 # Compiler
 C++ 		= c++
-CFLAGS		= -Wall -Werror -Wextra -std=c++20
+CFLAGS		=  -std=c++20
 RM			= rm -f
 RMDIR		= rm -rf
 
 # Source / OBJ files / Includes
 SRC 		=	src/Server.cpp \
 				src/main.cpp \
-				src/Client.cpp
+				src/Client.cpp \
+				src/Message.cpp \
+				src/Channel.cpp \
+				src/commands.cpp
 OBJ 		= $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 OBJ_DIR		= obj
 INCLUDE		= -I "./inc"

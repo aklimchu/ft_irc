@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <vector>
-//#include <Client.hpp>
+#include <Client.hpp>
 
 class Channel {
 	public:
@@ -14,10 +14,10 @@ class Channel {
 
 		
 		private:
-			// std::vector<Client*>		operator;
-			// std::vector<Client*>		users;
-			// std::vector<Client*>		invite;
-			// std::vector<Client*>		voice;
-			size_t						user_limit;
-			std::string					password;
+			std::vector<Client*>		_operator;
+			std::vector<Client*>		_users;
+			std::vector<Client*>		_invite;
+			std::vector<Client*>		_voice;
+			size_t						_user_limit;
+			std::string					_password;
 };
