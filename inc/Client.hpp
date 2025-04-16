@@ -15,6 +15,10 @@ class	Client
 		Client(int fd);
 		~Client();
 
+		int					getFd() const;
+		const std::string	&getUsername() const;
+		const std::string	&getNickname() const;
+
 };
 
 #endif
