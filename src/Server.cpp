@@ -39,7 +39,7 @@ void Server::initServer(char *argv[]) {
 
 	std::memset(&sockaddr, 0, sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(std::atoi(argv[1])); // can take from argv
+	sockaddr.sin_port = htons(std::atoi(argv[1]));
 	sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (((bind(this->_sockfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr))) < 0)) {
@@ -171,7 +171,7 @@ void Server::startServer(void)
 
 void	Server::executeCommand(const std::string &buffer, Client &client)
 {
-	Message message_received = Message(buffer);
+	Message message_received = Message(buffer, getClients());
 
 	std::string sender = client.getNickname();
 	if (sender.empty()) {
@@ -317,4 +317,16 @@ void Server::privmsg(Message & message, Client &client) {
     //        RPL_AWAY
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
 	(void)client;
+	try {
+		message.setReceiver();
+		Client receiver = message.getReceiver();
+		std::cout << "Receiver of PRIVMSG" + receiver.getNickname() << std::endl;
+	}
+	catch (std::exception & e) {
+		std::cout << e.what() << std::endl;
+	}
 };
+
+std::map<int, Client> Server::getClients(void) const {
+	return this->_clients;
+}

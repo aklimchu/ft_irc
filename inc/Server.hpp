@@ -42,6 +42,7 @@ class Server {
 		void	handleNewClient();
 		void	handleOldClient(size_t &i);
 		//void	handleClientsLine(const std::string &line, Client &client);
+		std::map<int, Client> getClients(void) const;
 
 		void	pass(Message & message, Client &client);
 		void	nick(Message & message, Client &client);
