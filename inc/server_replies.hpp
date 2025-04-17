@@ -71,7 +71,7 @@ inline std::string errUModeUnknownFlag(const std::string& server, const std::str
 
 //502 ERR_USERSDONTMATCH
 inline std::string errUsersDontMatch(const std::string& server, const std::string& nick) {
-	return ":" + server + " 502 " + nick + " ::Cannot change mode for other users\r\n";
+	return ":" + server + " 502 " + nick + " :Cannot change mode for other users\r\n";
 }
 
 //221 RPL_UMODEIS
