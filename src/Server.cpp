@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "server_replies.hpp"
 
 bool Server::_signal_received = false;
 
@@ -192,7 +193,7 @@ void	Server::executeCommand(const std::string &buffer, Client &client)
 void Server::pass(Message & message, Client &client) {
 	// Numeric Replies:
 
-	// ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
+	// ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
 	std::cout << "PASS command by " << message.getSender() << std::endl;
 
 	if (message.getBufferDivided()[1] == _server_passwd)
@@ -221,7 +222,7 @@ void Server::nick(Message & message, Client &client) {
 void Server::user(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
+    //        ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
 	std::cout << "USER command by " << message.getSender() << std::endl;
 
 	client.setUsername(message.getBufferDivided()[1]);
@@ -238,7 +239,7 @@ void Server::user(Message & message, Client &client) {
 void Server::join(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NEEDMOREPARAMS              ERR_BANNEDFROMCHAN
+    //        ✓ERR_NEEDMOREPARAMS              ERR_BANNEDFROMCHAN
     //        ERR_INVITEONLYCHAN              ERR_BADCHANNELKEY
     //        ERR_CHANNELISFULL               ERR_BADCHANMASK
     //        ERR_NOSUCHCHANNEL               ERR_TOOMANYCHANNELS
@@ -251,7 +252,7 @@ void Server::join(Message & message, Client &client) {
 void Server::part(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
+    //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_NOTONCHANNEL
 	std::cout << "PART command by " << message.getSender() << std::endl;
 	(void)client;
@@ -260,7 +261,7 @@ void Server::part(Message & message, Client &client) {
 void Server::topic(Message & message, Client &client) {
 	// Numeric Replies:
 
-	// ERR_NEEDMOREPARAMS              ERR_NOTONCHANNEL
+	// ✓ERR_NEEDMOREPARAMS              ERR_NOTONCHANNEL
 	// RPL_NOTOPIC                     RPL_TOPIC
 	// ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
 	std::cout << "TOPIC command by " << message.getSender() << std::endl;
@@ -270,7 +271,7 @@ void Server::topic(Message & message, Client &client) {
 void Server::invite(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NEEDMOREPARAMS              ERR_NOSUCHNICK
+    //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHNICK
     //        ERR_NOTONCHANNEL                ERR_USERONCHANNEL
     //        ERR_CHANOPRIVSNEEDED
     //        RPL_INVITING                    RPL_AWAY
@@ -281,7 +282,7 @@ void Server::invite(Message & message, Client &client) {
 void Server::kick(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
+    //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_BADCHANMASK                 ERR_CHANOPRIVSNEEDED
     //        ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
 	std::cout << "KICK command by " << message.getSender() << std::endl;
@@ -296,8 +297,8 @@ void Server::quit(Message & message, Client &client) {
 void Server::mode(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NEEDMOREPARAMS              ERR_USERSDONTMATCH
-    //        ERR_UMODEUNKNOWNFLAG            RPL_UMODEIS
+    //        ✓ERR_NEEDMOREPARAMS              ✓ERR_USERSDONTMATCH
+    //        ✓ERR_UMODEUNKNOWNFLAG            ✓RPL_UMODEIS
 	std::cout << "MODE command by " << message.getSender() << std::endl;
 	(void)client;
 };
@@ -305,20 +306,30 @@ void Server::mode(Message & message, Client &client) {
 void Server::privmsg(Message & message, Client &client) {
 	// Numeric Replies:
 
-    //        ERR_NORECIPIENT                 ERR_NOTEXTTOSEND
-    //        ERR_CANNOTSENDTOCHAN            ERR_NOTOPLEVEL
-    //        ERR_WILDTOPLEVEL                ERR_TOOMANYTARGETS
-    //        ERR_NOSUCHNICK
-    //        RPL_AWAY
+    //        ✓ERR_NORECIPIENT                 ✓ERR_NOTEXTTOSEND
+    //        ✓ERR_CANNOTSENDTOCHAN            ✓ERR_NOTOPLEVEL
+    //        ✓ERR_WILDTOPLEVEL                ✓ERR_TOOMANYTARGETS
+    //        ✓ERR_NOSUCHNICK
+    //        ✓RPL_AWAY
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
-	(void)client;
+	if (message.getBufferDivided()[1].empty()) {
+		this->sendToClient(client.getFd(), errNoRecipient(SERVER_NAME, client.getNickname(), \
+			"PRIVMSG"));
+		return;
+	}
+	if (message.getBufferDivided()[2].empty()) {
+		this->sendToClient(client.getFd(), errNoTextToSend(SERVER_NAME, client.getNickname()));
+		return;
+	}
 	try {
 		message.setReceiver();
 		Client receiver = message.getReceiver();
 		std::cout << "Receiver of PRIVMSG" + receiver.getNickname() << std::endl;
+		this->sendToClient(receiver.getFd(), message.getBufferDivided()[2]);
 	}
-	catch (std::exception & e) {
-		std::cout << e.what() << std::endl;
+	catch (Message::NoSuchNick & e) {
+		sendToClient(client.getFd(), errNoSuchNick(SERVER_NAME, message.getSender(), \
+			message.getBufferDivided()[1]));
 	}
 };
 

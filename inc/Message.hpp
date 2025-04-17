@@ -4,6 +4,9 @@
 #include <vector>
 #include <map>
 #include "Client.hpp"
+#include "server_replies.hpp"
+
+#define SERVER_NAME "ircserv"
 
 class Message {
 	public:
@@ -27,7 +30,7 @@ class Message {
 		class NoSuchNick : public std::exception {
 			public:
 				virtual const char* what() const throw() {
-					return ("ERROR :No such nickname");
+					return ("");
 				}
 		};
 

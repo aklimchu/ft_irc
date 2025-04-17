@@ -69,11 +69,8 @@ void	Message::setReceiver(void)
 	}
 	
 	if (found) {
-        // std::cout << "Found client: Key = " << found_pair.first
-        //           << ", Nickname = " << found_pair.second.getNickname() << std::endl;
 		this->_receiver = found_pair.second;
     } else {
-        //std::cout << "Client with nickname " << _buffer_divided[1] << " not found" << std::endl;
 		throw Message::NoSuchNick();
 	}
 

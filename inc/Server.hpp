@@ -16,6 +16,7 @@
 #include "Message.hpp"
 
 #define BACKLOG 10
+#define SERVER_NAME "ircserv"
 
 class Server;
 
