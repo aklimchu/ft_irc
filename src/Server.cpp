@@ -124,7 +124,7 @@ void	Server::handleOldClient(size_t &i)
 			try {
 				this->executeCommand(line, client);
 			}
-			catch (std::exception) {
+			catch (std::exception &) { // Added the reference...
 				throw;
 			}
 		}
@@ -156,7 +156,7 @@ void Server::startServer(void)
 					try {
 						this->handleOldClient(i);
 					}
-					catch (std::exception) {
+					catch (std::exception &) { // Added the reference...
 						throw;
 					}
 				}
@@ -182,7 +182,7 @@ void	Server::executeCommand(const std::string &buffer, Client &client)
         try {
 			(this->*(it->second))(message_received, client);
 		}
-		catch (std::exception) {
+		catch (std::exception &) { // Added the reference...
 			throw;
 		}
     } else {
@@ -194,10 +194,27 @@ void Server::pass(Message & message, Client &client) {
 	// Numeric Replies:
 
 	// ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
+	int			fd = client.getFd();
+	std::string	nick = client.getNickname().empty() ? "*" : client.getNickname();
+
 	std::cout << "PASS command by " << message.getSender() << std::endl;
+
+	if (client.isRegistered())
+	{
+		sendToClient(fd, errAlreadyRegistered(SERVER_NAME, nick));
+		return ;
+	}
+
+	if (message.getBufferDivided().size() < 2)
+	{
+		sendToClient(client.getFd(), errNeedMoreParams(SERVER_NAME, nick, "PASS"));
+		return ;
+	}
 
 	if (message.getBufferDivided()[1] == _server_passwd)
 		client.setPasswdOK(true);
+	else
+		sendToClient(client.getFd(), errPasswdMismatch(SERVER_NAME));
 };
 
 void Server::nick(Message & message, Client &client) {
@@ -206,16 +223,53 @@ void Server::nick(Message & message, Client &client) {
     //        ERR_NONICKNAMEGIVEN             ERR_ERRONEUSNICKNAME
     //        ERR_NICKNAMEINUSE               ERR_NICKCOLLISION
     //        ERR_UNAVAILRESOURCE             ERR_RESTRICTED
+
+	int			fd = client.getFd();
+	std::string	nick = client.getNickname().empty() ? "*" : client.getNickname();
+
+	if (!client.isPasswdOK())
+	{
+		sendToClient(fd, errPasswdMismatch(SERVER_NAME));
+		return ;
+	}
+
 	std::cout << "NICK command by " << message.getSender() << std::endl;
 
-	client.setNickname(message.getBufferDivided()[1]);
+	if (message.getBufferDivided().size() < 2)
+	{
+		sendToClient(fd, errNoNicknameGiven(SERVER_NAME, nick));
+		return ;
+	}
+
+	std::string	newNick = message.getBufferDivided()[1];
+
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		if (it->second.getNickname() == newNick && it->first != client.getFd()) {
+			sendToClient(fd, errNicknameInUse(SERVER_NAME, nick, newNick));
+			return ;
+		}
+	}
+	client.setNickname(newNick);
+	//client.setNickname(message.getBufferDivided()[1]);
 	client.setNicknameOK(true);
 
-	if (client.isUsernameOK() == true) {
-		if (client.isPasswdOK() == true)
-			client.setRegistered(true);
-		else
-			throw Server::BadPassword();
+	if (!client.isRegistered()) // 1st time registeration
+	{
+		if (client.isUsernameOK() == true) {
+			if (client.isPasswdOK() == true)
+			{
+				client.setRegistered(true);
+				this->welcomeMessages(client);
+			}
+			else
+				throw Server::BadPassword();
+		}
+	}
+	else // Nick reset
+	{
+		std::string	str = ":" + nick + " NICK :" + newNick + "\r\n";
+		sendToClient(fd, str);
 	}
 };
 
@@ -223,14 +277,39 @@ void Server::user(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
+
+	int			fd = client.getFd();
+	std::string	nick = client.getNickname().empty() ? "*" : client.getNickname();
+
+	if (!client.isPasswdOK())
+	{
+		sendToClient(fd, errPasswdMismatch(SERVER_NAME));
+		return ;
+	}
+
+	if (client.isRegistered())
+	{
+		sendToClient(fd, errAlreadyRegistered(SERVER_NAME, nick));
+		return ;
+	}
+
 	std::cout << "USER command by " << message.getSender() << std::endl;
+
+	if (message.getBufferDivided().size() < 2)
+	{
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "USER"));
+		return ;
+	}
 
 	client.setUsername(message.getBufferDivided()[1]);
 	client.setUsernameOK(true);
 	
 	if (client.isNicknameOK() == true) {
 		if (client.isPasswdOK() == true)
+		{
 			client.setRegistered(true);
+			this->welcomeMessages(client);
+		}
 		else
 			throw Server::BadPassword();
 	}
@@ -336,6 +415,19 @@ void Server::privmsg(Message & message, Client &client) {
 void	Server::sendToClient(int fd, const std::string &msg)
 {
 	send(fd, msg.c_str(), msg.length(), 0);
+}
+
+void	Server::welcomeMessages(Client &client)
+{
+	int			fd = client.getFd();
+	std::string	nick = client.getNickname();
+	std::string	userModes = "o";
+	std::string	channelModes = "itkol";
+
+	sendToClient(fd, rplWelcome(SERVER_NAME, nick));
+	sendToClient(fd, rplYourHost(SERVER_NAME, nick));
+	sendToClient(fd, rplCreated(SERVER_NAME, nick));
+	sendToClient(fd, rplMyInfo(SERVER_NAME, nick, userModes, channelModes));
 }
 
 std::map<int, Client> Server::getClients(void) const {

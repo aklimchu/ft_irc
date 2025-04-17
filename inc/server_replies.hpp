@@ -4,10 +4,61 @@
 
 // GENERAL
 
+// 001 RPL_WELCOME
+inline std::string	rplWelcome(const std::string &server, const std::string &nick)
+{
+	return (":" + server + " 001 " + nick + " :Welcome to the IRC Network, " + nick + "\r\n");
+}
+
+// 002 RPL_YOURHOST
+inline std::string	rplYourHost(const std::string &server, const std::string &nick)
+{
+	return (":" + server + " 002 " + nick + " :Your host is " + server + ", running version 1.0\r\n");
+}
+
+// 003 RPL_CREATED
+inline std::string	rplCreated(const std::string &server, const std::string &nick)
+{
+	return (":" + server + " 003 " + nick + " :This server was created 1.1.2000\r\n");
+}
+
+// 004 RPL_MYINFO
+inline std::string	rplMyInfo(const std::string &server, const std::string &nick,
+	const std::string &userModes, const std::string &channelModes)
+{
+	return (":" + server + " 004 " + nick + " " + server + " 1.0 " + userModes + " " + channelModes + "\r\n");
+}
+
+// 431 ERR_NONICKNAMEGIVEN
+inline std::string	errNoNicknameGiven(const std::string &server, const std::string &nick)
+{
+	return (":" + server + " 431 " + nick + " :No nickname given\r\n");
+}
+
+// 433 ERR_NICKNAMEINUSE
+inline std::string	errNicknameInUse(const std::string &server,
+	const std::string &senderNick, const std::string &attemptedNick)
+{
+	return (":" + server + " 433 " + senderNick + " " + attemptedNick + " :Nickname is already in use\r\n");
+}
+
+
 // 461 ERR_NEEDMOREPARAMS
 inline std::string errNeedMoreParams(const std::string& server, \
 	const std::string& nick, const std::string& command) {
 		return ":" + server + " 461 " + nick + " " + command + " :Not enough parameters\r\n";
+}
+
+// 462 ERR_ALREADYREGISTRED
+inline std::string	errAlreadyRegistered(const std::string &server, const std::string &nick)
+{
+	return (":" + server + " 462 " + nick + " :You may not reregister\r\n");
+}
+
+// 464 ERR_PASSWDMISMATCH
+inline std::string	errPasswdMismatch(const std::string &server)
+{
+	return (":" + server + " 464 * :Password incorrect\r\n");
 }
 
 
