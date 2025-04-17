@@ -2,8 +2,8 @@
 
 //--------------------------------Constructors--------------------------------//
 
-Message::Message(std::string buffer) : _buffer(buffer), _sender("SenderX"), \
-	_command("Unknown") {
+Message::Message(std::string buffer, std::map<int, Client>	clients_map) : _buffer(buffer), _sender("SenderX"), \
+	_command("Unknown"), _clients_map(clients_map) {
 }
 
 //-------------------------------Member functions------------------------------//
@@ -34,12 +34,16 @@ int Message::parseBuffer(void) {
 	return 0;
 }
 
-std::string & Message::getCommand(void) {
+const std::string & Message::getCommand(void) const {
 	return(this->_command);
 }
 
-std::string & Message::getSender(void) {
+const std::string & Message::getSender(void) const {
 	return(this->_sender);
+}
+
+Client & Message::getReceiver(void) {
+	return(this->_receiver);
 }
 
 std::vector<std::string> & Message::getBufferDivided(void) {
@@ -49,4 +53,28 @@ std::vector<std::string> & Message::getBufferDivided(void) {
 void	Message::setSender(const std::string &sender)
 {
 	this->_sender = sender;
+}
+
+void	Message::setReceiver(void)
+{
+	// what if channel?
+	std::pair<int, Client> found_pair;
+	bool found = false;
+	for (const auto& pair : _clients_map) {
+		if (pair.second.getNickname() == _buffer_divided[1]) {
+			found_pair = pair;
+			found = true;
+			break;
+		}
+	}
+	
+	if (found) {
+        // std::cout << "Found client: Key = " << found_pair.first
+        //           << ", Nickname = " << found_pair.second.getNickname() << std::endl;
+		this->_receiver = found_pair.second;
+    } else {
+        //std::cout << "Client with nickname " << _buffer_divided[1] << " not found" << std::endl;
+		throw Message::NoSuchNick();
+	}
+
 }

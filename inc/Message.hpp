@@ -2,12 +2,13 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include "Client.hpp"
 
 class Message {
 	public:
 		Message(void) = delete;
-		Message(std::string buffer);
+		Message(std::string buffer, std::map<int, Client> clients_map);
 		Message(Message const & src) = delete;
 		~Message(void) = default;
 
@@ -15,20 +16,30 @@ class Message {
 
 		std::vector<std::string> ft_split(std::string & line, const char & sep);
 		int parseBuffer(void);
-		std::string& getCommand(void);
-		std::string& getSender(void);
+		const std::string& getCommand(void) const;
+		const std::string& getSender(void) const;
+		Client & getReceiver(void);
 		std::vector<std::string>& getBufferDivided(void);
 
 		void	setSender(const std::string &sender);
+		void	setReceiver(void);
+
+		class NoSuchNick : public std::exception {
+			public:
+				virtual const char* what() const throw() {
+					return ("ERROR :No such nickname");
+				}
+		};
 
 	private:
 		std::string _buffer;
 		std::vector<std::string> _buffer_divided;
 		std::string _sender;
-		std::string _receiver;
+		Client		_receiver;
 		// payload
 		std::string _command;
 		const std::vector<std::string> _function_names = \
 			{"PASS", "NICK", "USER", "JOIN", "PART", "TOPIC", "INVITE", \
 			"KICK", "QUIT", "MODE", "PRIVMSG"};
+		std::map<int, Client>	_clients_map;
 };
