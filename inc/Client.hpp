@@ -13,6 +13,8 @@ class	Client
 		std::string	_realname;
 		std::string _buffer;
 		bool		_registered;
+		bool		_usernameOK;
+		bool		_nicknameOK;
 		bool		_passwdOK;
 
 	
@@ -28,6 +30,8 @@ class	Client
 		/*const*/ std::string	&getBuffer() /*const*/;
 		bool				isRegistered() const;
 		bool				isPasswdOK() const;
+		bool				isUsernameOK(void);
+		bool				isNicknameOK(void);
 
 		void	setUsername(const std::string &str);
 		void	setNickname(const std::string &str);
@@ -37,7 +41,8 @@ class	Client
 		void	clearBuffer();
 		void	setRegistered(bool value);
 		void	setPasswdOK(bool value);
-
+		void	setUsernameOK(bool value);
+		void	setNicknameOK(bool value);
 };
 
 #endif

@@ -1,25 +1,27 @@
 #include "Server.hpp"
 
-bool Server::signal_received = false;
+bool Server::_signal_received = false;
 
-Server::Server() : sockfd(-1) {}
+//Server::Server() : _sockfd(-1) {}
+
+Server::Server(std::string passwd) : _sockfd(-1), _server_passwd(passwd) {};
 
 void Server::handleSignals(int num) {
 	(void)num;
 	
-	Server::signal_received = true;
+	Server::_signal_received = true;
 	std::cout << std::endl << "Signal received" << std::endl;
 }
 
 void Server::closeFds(void) {
-	if (this->sockfd != -1) {
-		close(this->sockfd);
+	if (this->_sockfd != -1) {
+		close(this->_sockfd);
 	}
 	// close client fds
-	for(size_t i = 1; i < this->pollFds.size(); i++) //i has to start from 1(sockfd is the first element in pollFds)!
+	for(size_t i = 1; i < this->_pollFds.size(); i++) //i has to start from 1(_sockfd is the first element in _pollFds)!
 	{
-		if (this->pollFds[i].fd > -1)
-			close(this->pollFds[i].fd);
+		if (this->_pollFds[i].fd > -1)
+			close(this->_pollFds[i].fd);
 	}
 }
 
@@ -29,28 +31,28 @@ void	Server::setNonBlock(int fd)
 		std::cerr << "Error: setNonBlock()" << std::endl; //
 }
 
-void Server::initServer(void) {
+void Server::initServer(char *argv[]) {
 	struct sockaddr_in sockaddr;
 
-	if (((this->sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0))
+	if (((this->_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0))
 		throw SocketError();
 
 	std::memset(&sockaddr, 0, sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(PORT); // can take from argv
+	sockaddr.sin_port = htons(std::atoi(argv[1])); // can take from argv
 	sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (((bind(this->sockfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr))) < 0)) {
+	if (((bind(this->_sockfd, (struct sockaddr *) &sockaddr, sizeof(sockaddr))) < 0)) {
 		throw BindingError();
 	}
 
-	if ((listen(this->sockfd, BACKLOG)) < 0) {
+	if ((listen(this->_sockfd, BACKLOG)) < 0) {
 		throw ListeningError();
 	}
 
-	this->setNonBlock(this->sockfd);
+	this->setNonBlock(this->_sockfd);
 
-	/*while (!this->signal_received)  {
+	/*while (!this->_signal_received)  {
 		//accept and poll
 	}*/
 
@@ -74,7 +76,7 @@ void Server::initServer(void) {
 
 void	Server::handleNewClient()
 {
-	int	client_socket = accept(this->sockfd, NULL, NULL);
+	int	client_socket = accept(this->_sockfd, NULL, NULL);
 
 	if (client_socket < 0)
 		std::cerr << "Error: accept()" << std::endl; //
@@ -84,9 +86,9 @@ void	Server::handleNewClient()
 	pollfd	new_client;
 	new_client.fd = client_socket;
 	new_client.events = POLLIN;
-	this->pollFds.push_back(new_client);
+	this->_pollFds.push_back(new_client);
 
-	this->clients[client_socket] = Client(client_socket);
+	this->_clients[client_socket] = Client(client_socket);
 
 	std::cout << "New client connected" << std::endl;
 }
@@ -96,20 +98,20 @@ void	Server::handleOldClient(size_t &i)
 	char	buffer[1024];
 
 	std::memset(buffer, 0, sizeof(buffer));
-	ssize_t	bytes_read = recv(this->pollFds[i].fd, buffer, sizeof(buffer) - 1, 0);
+	ssize_t	bytes_read = recv(this->_pollFds[i].fd, buffer, sizeof(buffer) - 1, 0);
 	if (bytes_read <= 0) // Disconnet/Error
 	{
 		std::cout << "Client disconnected/Error happened" << std::endl;
-		close(this->pollFds[i].fd);
-		this->clients.erase(this->pollFds[i].fd); // Have to erase this first before below!!!
-		this->pollFds.erase(this->pollFds.begin() + i);
+		close(this->_pollFds[i].fd);
+		this->_clients.erase(this->_pollFds[i].fd); // Have to erase this first before below!!!
+		this->_pollFds.erase(this->_pollFds.begin() + i);
 		i--;
 	}
 	else // Incoming data
 	{
 		std::cout << "Data received:" << buffer << std::endl;
 
-		Client	&client = this->clients[this->pollFds[i].fd];
+		Client	&client = this->_clients[this->_pollFds[i].fd];
 		client.appendBuffer(buffer);
 
 		std::string	&buf = client.getBuffer();
@@ -123,7 +125,12 @@ void	Server::handleOldClient(size_t &i)
 			std::cout << "Parsed line: " << line << std::endl;
 
 			//this->handleClientsLine(line, client);
-			this->executeCommand(line, client);
+			try {
+				this->executeCommand(line, client);
+			}
+			catch (std::exception) {
+				throw;
+			}
 		}
 	}
 }
@@ -132,25 +139,31 @@ void Server::startServer(void)
 {
 	pollfd	server_pollfd;
 
-	server_pollfd.fd = this->sockfd;
+	server_pollfd.fd = this->_sockfd;
 	server_pollfd.events = POLLIN;
-	this->pollFds.push_back(server_pollfd);
+	this->_pollFds.push_back(server_pollfd);
 
-	while (!this->signal_received)
+	while (!this->_signal_received)
 	{
-		int	ready_fds = poll(this->pollFds.data(), this->pollFds.size(), -1);
+		int	ready_fds = poll(this->_pollFds.data(), this->_pollFds.size(), -1);
 
 		if (ready_fds < 0)
 			std::cerr << "Error: poll()" << std::endl; //
 
-		for (size_t i = 0; i < this->pollFds.size(); i++)
+		for (size_t i = 0; i < this->_pollFds.size(); i++)
 		{
-			if (this->pollFds[i].revents & POLLIN)
+			if (this->_pollFds[i].revents & POLLIN)
 			{
-				if (this->pollFds[i].fd == this->sockfd)
+				if (this->_pollFds[i].fd == this->_sockfd)
 					this->handleNewClient();
-				else
-					this->handleOldClient(i);
+				else {
+					try {
+						this->handleOldClient(i);
+					}
+					catch (std::exception) {
+						throw;
+					}
+				}
 			}
 		}
 	}
@@ -170,36 +183,64 @@ void	Server::executeCommand(const std::string &buffer, Client &client)
 		return;
 	auto it = _command_map.find(message_received.getCommand());
     if (it != _command_map.end()) {
-        (this->*(it->second))(message_received);
+        try {
+			(this->*(it->second))(message_received, client);
+		}
+		catch (std::exception) {
+			throw;
+		}
     } else {
         std::cerr << "Unknown command: " << message_received.getSender() << std::endl << std::endl;
     }
 }
 
-void Server::pass(Message & message) {
+void Server::pass(Message & message, Client &client) {
 	// Numeric Replies:
 
 	// ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
 	std::cout << "PASS command by " << message.getSender() << std::endl;
+
+	if (message.getBufferDivided()[1] == _server_passwd)
+		client.setPasswdOK(true);
 };
 
-void Server::nick(Message & message) {
+void Server::nick(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NONICKNAMEGIVEN             ERR_ERRONEUSNICKNAME
     //        ERR_NICKNAMEINUSE               ERR_NICKCOLLISION
     //        ERR_UNAVAILRESOURCE             ERR_RESTRICTED
 	std::cout << "NICK command by " << message.getSender() << std::endl;
+
+	client.setNickname(message.getBufferDivided()[1]);
+	client.setNicknameOK(true);
+
+	if (client.isUsernameOK() == true) {
+		if (client.isPasswdOK() == true)
+			client.setRegistered(true);
+		else
+			throw Server::BadPassword();
+	}
 };
 
-void Server::user(Message & message) {
+void Server::user(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
 	std::cout << "USER command by " << message.getSender() << std::endl;
+
+	client.setUsername(message.getBufferDivided()[1]);
+	client.setUsernameOK(true);
+	
+	if (client.isNicknameOK() == true) {
+		if (client.isPasswdOK() == true)
+			client.setRegistered(true);
+		else
+			throw Server::BadPassword();
+	}
 };
 
-void Server::join(Message & message) {
+void Server::join(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NEEDMOREPARAMS              ERR_BANNEDFROMCHAN
@@ -209,26 +250,29 @@ void Server::join(Message & message) {
     //        ERR_TOOMANYTARGETS              ERR_UNAVAILRESOURCE
     //        RPL_TOPIC
 	std::cout << "JOIN command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::part(Message & message) {
+void Server::part(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_NOTONCHANNEL
 	std::cout << "PART command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::topic(Message & message) {
+void Server::topic(Message & message, Client &client) {
 	// Numeric Replies:
 
 	// ERR_NEEDMOREPARAMS              ERR_NOTONCHANNEL
 	// RPL_NOTOPIC                     RPL_TOPIC
 	// ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
 	std::cout << "TOPIC command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::invite(Message & message) {
+void Server::invite(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NEEDMOREPARAMS              ERR_NOSUCHNICK
@@ -236,30 +280,34 @@ void Server::invite(Message & message) {
     //        ERR_CHANOPRIVSNEEDED
     //        RPL_INVITING                    RPL_AWAY
 	std::cout << "INVITE command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::kick(Message & message) {
+void Server::kick(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_BADCHANMASK                 ERR_CHANOPRIVSNEEDED
     //        ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
 	std::cout << "KICK command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::quit(Message & message) {
+void Server::quit(Message & message, Client &client) {
 	std::cout << "QUIT command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::mode(Message & message) {
+void Server::mode(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NEEDMOREPARAMS              ERR_USERSDONTMATCH
     //        ERR_UMODEUNKNOWNFLAG            RPL_UMODEIS
 	std::cout << "MODE command by " << message.getSender() << std::endl;
+	(void)client;
 };
 
-void Server::privmsg(Message & message) {
+void Server::privmsg(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ERR_NORECIPIENT                 ERR_NOTEXTTOSEND
@@ -268,4 +316,5 @@ void Server::privmsg(Message & message) {
     //        ERR_NOSUCHNICK
     //        RPL_AWAY
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
+	(void)client;
 };

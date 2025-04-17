@@ -1,10 +1,12 @@
 #include "Client.hpp"
 
-Client::Client() : _fd(-1), _registered(false), _passwdOK(false)
+Client::Client() : _fd(-1), _registered(false), _usernameOK(false), \
+	_nicknameOK(false), _passwdOK(false)
 {
 }
 
-Client::Client(int fd) : _fd(fd), _registered(false), _passwdOK(false)
+Client::Client(int fd) : _fd(fd), _registered(false), _usernameOK(false), \
+	_nicknameOK(false), _passwdOK(false)
 {
 }
 
@@ -48,6 +50,16 @@ bool	Client::isPasswdOK() const
 	return (this->_passwdOK);
 }
 
+bool	Client::isUsernameOK(void)
+{
+	return (this->_usernameOK);
+}
+
+bool	Client::isNicknameOK(void)
+{
+	return (this->_nicknameOK);
+}
+
 //SETTERS:
 void	Client::setUsername(const std::string &str)
 {
@@ -87,4 +99,14 @@ void	Client::setRegistered(bool value)
 void	Client::setPasswdOK(bool value)
 {
 	this->_passwdOK = value;
+}
+
+void	Client::setUsernameOK(bool value)
+{
+	this->_usernameOK = value;
+}
+
+void	Client::setNicknameOK(bool value)
+{
+	this->_nicknameOK = value;
 }

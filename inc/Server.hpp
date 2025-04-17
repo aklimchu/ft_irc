@@ -16,22 +16,22 @@
 #include "Message.hpp"
 
 #define BACKLOG 10
-#define PORT 8888
 
 class Server;
 
-using CommandFunction = void(Server::*)(Message&);
+using CommandFunction = void(Server::*)(Message&, Client &);
 
 class Server {
 	public:
-		Server(void);
+		Server(void) = delete;
+		Server(std::string passwd);
 		Server(Server & src) = delete;
 
 		~Server(void) = default;
 
 		Server & operator=(Server & rhs) = delete;
 
-		void initServer(void);
+		void initServer(char *argv[]);
 		void startServer(void);
 		void closeFds(void);
 		static void handleSignals(int num);
@@ -43,17 +43,17 @@ class Server {
 		void	handleOldClient(size_t &i);
 		//void	handleClientsLine(const std::string &line, Client &client);
 
-		void	pass(Message & message);
-		void	nick(Message & message);
-		void	user(Message & message);
-		void	join(Message & message);
-		void	part(Message & message);
-		void	topic(Message & message);
-		void	invite(Message & message);
-		void	kick(Message & message);
-		void	quit(Message & message);
-		void	mode(Message & message);
-		void	privmsg(Message & message);
+		void	pass(Message & message, Client &client);
+		void	nick(Message & message, Client &client);
+		void	user(Message & message, Client &client);
+		void	join(Message & message, Client &client);
+		void	part(Message & message, Client &client);
+		void	topic(Message & message, Client &client);
+		void	invite(Message & message, Client &client);
+		void	kick(Message & message, Client &client);
+		void	quit(Message & message, Client &client);
+		void	mode(Message & message, Client &client);
+		void	privmsg(Message & message, Client &client);
 		//do we need oper function?
 
 		class SocketError : public std::exception {
@@ -77,12 +77,20 @@ class Server {
 				}
 		};
 
-	private:
-		int sockfd;
-		static bool signal_received;
+		class BadPassword : public std::exception {
+			public:
+				virtual const char* what() const throw() {
+					return ("ERROR :Closing Link: localhost (Bad Password)");
+				}
+		};
 
-		std::vector<pollfd>		pollFds;
-		std::map<int, Client>	clients;
+	private:
+		int					_sockfd;
+		static bool			_signal_received;
+		const std::string	_server_passwd;
+
+		std::vector<pollfd>		_pollFds;
+		std::map<int, Client>	_clients;
 
 		const std::unordered_map<std::string, CommandFunction> _command_map = {
 			{"PASS", &Server::pass},
