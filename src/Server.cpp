@@ -125,8 +125,6 @@ void	Server::handleOldClient(size_t &i)
 			//this->handleClientsLine(line, client);
 			this->executeCommand(line, client);
 		}
-
-		//this->executeCommand(buffer);
 	}
 }
 
@@ -177,19 +175,6 @@ void	Server::executeCommand(const std::string &buffer, Client &client)
         std::cerr << "Unknown command: " << message_received.getSender() << std::endl << std::endl;
     }
 }
-
-/*void	Server::executeCommand(std::string buffer) {
-	Message message_received = Message(buffer);
-	
-	if (message_received.parseBuffer() == -1)
-		return;
-	auto it = _command_map.find(message_received.getCommand());
-    if (it != _command_map.end()) {
-        (this->*(it->second))(message_received);
-    } else {
-        std::cerr << "Unknown command: " << message_received.getSender() << std::endl << std::endl;
-    }
-}*/
 
 void Server::pass(Message & message) {
 	// Numeric Replies:

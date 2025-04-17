@@ -24,11 +24,11 @@ std::vector<std::string> Message::ft_split(std::string & line, const char & sep)
 
 int Message::parseBuffer(void) {
 
-	if (std::size(_buffer) == 0) // \r, \n symbols?
+	if (std::size(_buffer) == 0)
 		return -1;
 	_buffer_divided = ft_split(_buffer, ' '); // do we need to explicitly delete?
 	for (size_t i = 0; i < _function_names.size(); i++) {
-		if (this->_buffer_divided[0] == this->_function_names[i]) // how about MODE + flag?
+		if (this->_buffer_divided[0] == this->_function_names[i])
 			this->_command = this->_function_names[i];
 	}
 	return 0;
