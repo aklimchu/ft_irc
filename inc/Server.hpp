@@ -41,6 +41,7 @@ class Server {
 		void	executeCommand(const std::string &buffer, Client &client);
 		void	handleNewClient();
 		void	handleOldClient(size_t &i);
+		void	sendToClient(int fd, const std::string &msg);
 		//void	handleClientsLine(const std::string &line, Client &client);
 
 		void	pass(Message & message, Client &client);

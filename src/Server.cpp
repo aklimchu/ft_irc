@@ -51,11 +51,6 @@ void Server::initServer(char *argv[]) {
 	}
 
 	this->setNonBlock(this->_sockfd);
-
-	/*while (!this->_signal_received)  {
-		//accept and poll
-	}*/
-
 }
 
 /*void	Server::handleClientsLine(const std::string &line, Client &client)
@@ -318,3 +313,8 @@ void Server::privmsg(Message & message, Client &client) {
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
 	(void)client;
 };
+
+void	sendToClient(int fd, const std::string &msg)
+{
+	send(fd, msg.c_str(), msg.length(), 0);
+}
