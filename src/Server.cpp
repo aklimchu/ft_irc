@@ -54,22 +54,6 @@ void Server::initServer(char *argv[]) {
 	this->setNonBlock(this->_sockfd);
 }
 
-/*void	Server::handleClientsLine(const std::string &line, Client &client)
-{
-	std::string	sender = client.getNickname();
-	if (sender.empty())
-		sender = ":" + std::to_string(client.getFd());
-
-	Message msg(line);
-	msg.setSender(sender);
-
-	if (msg.parseBuffer() == 0)
-		msg.callCommand();
-	else
-		std::cerr << "Invalid command: " << line << std::endl;
-}*/
-
-
 void	Server::handleNewClient()
 {
 	int	client_socket = accept(this->_sockfd, NULL, NULL);
@@ -120,7 +104,6 @@ void	Server::handleOldClient(size_t &i)
 
 			std::cout << "Parsed line: " << line << std::endl;
 
-			//this->handleClientsLine(line, client);
 			try {
 				this->executeCommand(line, client);
 			}
@@ -269,7 +252,10 @@ void Server::nick(Message & message, Client &client) {
 	else // Nick reset
 	{
 		std::string	str = ":" + nick + " NICK :" + newNick + "\r\n";
-		sendToClient(fd, str);
+		//sendToClient(fd, str);
+		// Make the loop check shared channels between clients, and only send to the ones that share a channel!
+		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+			sendToClient(it->first, str);
 	}
 };
 
@@ -411,6 +397,19 @@ void Server::privmsg(Message & message, Client &client) {
 			message.getBufferDivided()[1]));
 	}
 };
+
+void	Server::ping(Message &message, Client &client)
+{
+	std::vector<std::string> &args = message.getBufferDivided();
+
+	if (args.size() < 2)
+	{
+		std::cerr << "PING command received with parameter missing" << std::endl;
+		return ;
+	}
+
+	sendToClient(client.getFd(), "PONG :" + args[1] + "\r\n");
+}
 
 void	Server::sendToClient(int fd, const std::string &msg)
 {

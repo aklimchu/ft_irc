@@ -44,7 +44,6 @@ class Server {
 		void	handleOldClient(size_t &i);
 		void	sendToClient(int fd, const std::string &msg);
 		void	welcomeMessages(Client &client);
-		//void	handleClientsLine(const std::string &line, Client &client);
 		std::map<int, Client> getClients(void) const;
 
 		void	pass(Message & message, Client &client);
@@ -58,6 +57,7 @@ class Server {
 		void	quit(Message & message, Client &client);
 		void	mode(Message & message, Client &client);
 		void	privmsg(Message & message, Client &client);
+		void	ping(Message &message, Client &client);
 		//do we need oper function?
 
 		class SocketError : public std::exception {
@@ -107,6 +107,7 @@ class Server {
 			{"KICK", &Server::kick},
 			{"QUIT", &Server::quit},
 			{"MODE", &Server::mode},
-			{"PRIVMSG", &Server::privmsg}
+			{"PRIVMSG", &Server::privmsg},
+			{"PING", &Server::ping}
 		};
 };
