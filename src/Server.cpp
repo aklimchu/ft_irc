@@ -69,6 +69,7 @@ void	Server::handleNewClient()
 	this->_pollFds.push_back(new_client);
 
 	this->_clients[client_socket] = Client(client_socket);
+	//this->_clients[client_socket] = new Client(client_socket); //
 
 	std::cout << "New client connected" << std::endl;
 }
@@ -200,6 +201,7 @@ void Server::pass(Message & message, Client &client) {
 		sendToClient(client.getFd(), errPasswdMismatch(SERVER_NAME));
 };
 
+
 void Server::nick(Message & message, Client &client) {
 	// Numeric Replies:
 
@@ -226,7 +228,8 @@ void Server::nick(Message & message, Client &client) {
 
 	std::string	newNick = message.getBufferDivided()[1];
 
-	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	// Check if nick already taken
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); it++)
 	{
 		if (it->second.getNickname() == newNick && it->first != client.getFd()) {
 			sendToClient(fd, errNicknameInUse(SERVER_NAME, nick, newNick));
@@ -234,7 +237,6 @@ void Server::nick(Message & message, Client &client) {
 		}
 	}
 	client.setNickname(newNick);
-	//client.setNickname(message.getBufferDivided()[1]);
 	client.setNicknameOK(true);
 
 	if (!client.isRegistered()) // 1st time registeration
@@ -251,11 +253,23 @@ void Server::nick(Message & message, Client &client) {
 	}
 	else // Nick reset
 	{
-		std::string	str = ":" + nick + " NICK :" + newNick + "\r\n";
-		//sendToClient(fd, str);
+		//std::string	str = ":" + nick + " NICK :" + newNick + "\r\n";
+		std::string	user = client.getUsername().empty() ? "user" : client.getUsername();
+		std::string	host = "localhost"; // Placeholder?
+		std::string	str = ":" + nick + "!" + user + "@" + host + " NICK :" + newNick + "\r\n";
+
 		// Make the loop check shared channels between clients, and only send to the ones that share a channel!
-		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-			sendToClient(it->first, str);
+		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); it++)
+		{
+			if (it->first == fd || this->sharedChannel(client, it->second))
+			{
+				sendToClient(it->first, str);
+				//std::cout << "Sent to client fd: " << it->first << " client nick: "
+				//<< it->second.getNickname() << std::endl;
+				std::cout << "Sent to client: " << str << std::endl; // Debug
+			}
+			
+		}
 	}
 };
 
@@ -311,7 +325,28 @@ void Server::join(Message & message, Client &client) {
     //        ERR_TOOMANYTARGETS              ERR_UNAVAILRESOURCE
     //        RPL_TOPIC
 	std::cout << "JOIN command by " << message.getSender() << std::endl;
-	(void)client;
+
+	if (message.getBufferDivided().size() < 2)
+	{
+		sendToClient(client.getFd(), errNeedMoreParams(SERVER_NAME, client.getNickname(), "JOIN"));
+		return ;
+	}
+	std::string	channelName = message.getBufferDivided()[1];
+
+	// If it doesnt exist, create it
+	if (this->_channels.find(channelName) == this->_channels.end())
+	{
+		this->_channels[channelName] = Channel(channelName);
+	}
+	this->_channels[channelName].addUser(&client);
+	client.joinChannel(channelName);
+	
+	// JOIN message to all channel members
+	std::string	str = ":" + client.getNickname() + " JOIN :" + channelName + "\r\n";
+	const std::set<Client *>	&users = this->_channels[channelName].getUsers();
+
+	for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
+		sendToClient((*it)->getFd(), str);
 };
 
 void Server::part(Message & message, Client &client) {
@@ -429,6 +464,20 @@ void	Server::welcomeMessages(Client &client)
 	sendToClient(fd, rplMyInfo(SERVER_NAME, nick, userModes, channelModes));
 }
 
-std::map<int, Client> Server::getClients(void) const {
+// Added to return a const reference
+const std::map<int, Client> &Server::getClients(void) const {
 	return this->_clients;
+}
+
+bool	Server::sharedChannel(const Client &a, const Client &b) const
+{
+	const std::set<std::string>	&aChannels = a.getChannels();
+	const std::set<std::string>	&bChannels = b.getChannels();
+
+	for (std::set<std::string>::const_iterator it = aChannels.begin(); it != aChannels.end(); it++)
+	{
+		if (bChannels.find(*it) != bChannels.end())
+			return (true);
+	}
+	return (false);
 }

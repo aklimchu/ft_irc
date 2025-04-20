@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include "Client.hpp"
 #include "Message.hpp"
+#include "Channel.hpp"
 
 #define BACKLOG 10
 #define SERVER_NAME "ircserv"
@@ -38,13 +39,13 @@ class Server {
 		static void handleSignals(int num);
 		void	setNonBlock(int fd);
 
-		//void	executeCommand(std::string buffer);
 		void	executeCommand(const std::string &buffer, Client &client);
 		void	handleNewClient();
 		void	handleOldClient(size_t &i);
 		void	sendToClient(int fd, const std::string &msg);
 		void	welcomeMessages(Client &client);
-		std::map<int, Client> getClients(void) const;
+		const std::map<int, Client> &getClients(void) const; // Added to return const reference
+		bool	sharedChannel(const Client &a, const Client &b) const;
 
 		void	pass(Message & message, Client &client);
 		void	nick(Message & message, Client &client);
@@ -93,8 +94,9 @@ class Server {
 		static bool			_signal_received;
 		const std::string	_server_passwd;
 
-		std::vector<pollfd>		_pollFds;
-		std::map<int, Client>	_clients;
+		std::vector<pollfd>				_pollFds;
+		std::map<int, Client>			_clients;
+		std::map<std::string, Channel>	_channels;
 
 		const std::unordered_map<std::string, CommandFunction> _command_map = {
 			{"PASS", &Server::pass},

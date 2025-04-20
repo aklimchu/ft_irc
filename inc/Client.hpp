@@ -2,6 +2,7 @@
 # define CLIENT_HPP
 
 #include <string>
+#include <set>
 
 
 class	Client
@@ -16,6 +17,8 @@ class	Client
 		bool		_usernameOK;
 		bool		_nicknameOK;
 		bool		_passwdOK;
+
+		std::set<std::string>	_channels;
 
 	
 	public:
@@ -43,6 +46,10 @@ class	Client
 		void	setPasswdOK(bool value);
 		void	setUsernameOK(bool value);
 		void	setNicknameOK(bool value);
+
+		void							joinChannel(const std::string &channelName);
+		void							leaveChannel(const std::string &channelName);
+		const	std::set<std::string>	&getChannels() const;
 };
 
 #endif

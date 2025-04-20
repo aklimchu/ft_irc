@@ -110,3 +110,18 @@ void	Client::setNicknameOK(bool value)
 {
 	this->_nicknameOK = value;
 }
+
+void	Client::joinChannel(const std::string &channelName)
+{
+	this->_channels.insert(channelName);
+}
+
+void	Client::leaveChannel(const std::string &channelName)
+{
+	this->_channels.erase(channelName);
+}
+
+const	std::set<std::string>	&Client::getChannels() const
+{
+	return (this->_channels);
+}
