@@ -59,6 +59,7 @@ class Server {
 		void	mode(Message & message, Client &client);
 		void	privmsg(Message & message, Client &client);
 		void	ping(Message &message, Client &client);
+		void	cap(Message &message, Client &client);
 		//do we need oper function?
 
 		class SocketError : public std::exception {
@@ -110,6 +111,7 @@ class Server {
 			{"QUIT", &Server::quit},
 			{"MODE", &Server::mode},
 			{"PRIVMSG", &Server::privmsg},
-			{"PING", &Server::ping}
+			{"PING", &Server::ping},
+			{"CAP", &Server::cap}
 		};
 };

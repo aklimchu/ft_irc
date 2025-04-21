@@ -64,12 +64,12 @@ void	Server::handleNewClient()
 	this->setNonBlock(client_socket);
 
 	pollfd	new_client;
+	std::memset(&new_client, 0, sizeof(new_client));
 	new_client.fd = client_socket;
 	new_client.events = POLLIN;
 	this->_pollFds.push_back(new_client);
 
 	this->_clients[client_socket] = Client(client_socket);
-	//this->_clients[client_socket] = new Client(client_socket); //
 
 	std::cout << "New client connected" << std::endl;
 }
@@ -119,6 +119,7 @@ void Server::startServer(void)
 {
 	pollfd	server_pollfd;
 
+	std::memset(&server_pollfd, 0, sizeof(server_pollfd));
 	server_pollfd.fd = this->_sockfd;
 	server_pollfd.events = POLLIN;
 	this->_pollFds.push_back(server_pollfd);
@@ -400,7 +401,43 @@ void Server::mode(Message & message, Client &client) {
     //        ✓ERR_NEEDMOREPARAMS              ✓ERR_USERSDONTMATCH
     //        ✓ERR_UMODEUNKNOWNFLAG            ✓RPL_UMODEIS
 	std::cout << "MODE command by " << message.getSender() << std::endl;
-	(void)client;
+
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() < 2)
+	{
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "MODE"));
+		return ;
+	}
+	// User modes (only +i, because irssi sends it?)
+	if (args[1][0] != '#')
+	{
+		if (args[1] != nick) // Check if its their own nick
+		{
+			sendToClient(fd, errUsersDontMatch(SERVER_NAME, nick));
+			return ;
+		}
+		if (args.size() == 2) // Only shows usermodes
+		{
+			sendToClient(fd, rplUModeIs(SERVER_NAME, nick, "+" + client.getUsermodes()));
+			return ;
+		}
+		// Add/remove mode(s)
+		std::string	mode = args[2];
+		for (size_t i = 1; i < mode.size(); i++)
+		{
+			if (mode[0] == '+')
+				client.addUsermode(mode[i]);
+			else if (mode[0] == '-')
+				client.removeUsermode(mode[i]);
+		}
+		sendToClient(fd, rplUModeIs(SERVER_NAME, nick, "+" + client.getUsermodes()));
+	}
+	else // Channel modes
+	{
+	}
 };
 
 void Server::privmsg(Message & message, Client &client) {
@@ -446,6 +483,27 @@ void	Server::ping(Message &message, Client &client)
 	sendToClient(client.getFd(), "PONG :" + args[1] + "\r\n");
 }
 
+void	Server::cap(Message &message, Client &client)
+{
+	int							fd = client.getFd();
+	std::vector<std::string>	&args = message.getBufferDivided();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+
+	if (args.size() < 2)
+		return ;
+	if (args[1] == "LS")
+		sendToClient(fd, "CAP " + nick + " LS :\r\n");
+	else if (args[1] == "REQ")
+	{
+		if (args.size() < 3 || args[2].empty())
+		{
+			sendToClient(fd, "CAP " + nick + " NAK :\r\n");
+			return ;
+		}
+		sendToClient(fd, "CAP " + nick + " NAK :" + args[2] + "\r\n");
+	}
+}
+
 void	Server::sendToClient(int fd, const std::string &msg)
 {
 	send(fd, msg.c_str(), msg.length(), 0);
@@ -455,7 +513,7 @@ void	Server::welcomeMessages(Client &client)
 {
 	int			fd = client.getFd();
 	std::string	nick = client.getNickname();
-	std::string	userModes = "o";
+	std::string	userModes = "io";
 	std::string	channelModes = "itkol";
 
 	sendToClient(fd, rplWelcome(SERVER_NAME, nick));

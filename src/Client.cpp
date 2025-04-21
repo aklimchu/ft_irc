@@ -40,6 +40,11 @@ const std::string	&Client::getRealname() const
 	return (this->_buffer);
 }
 
+const std::string	&Client::getUsermodes() const
+{
+	return (this->_usermodes);
+}
+
 bool	Client::isRegistered() const
 {
 	return (this->_registered);
@@ -84,6 +89,20 @@ void	Client::setBuffer(const std::string &str)
 void	Client::appendBuffer(const std::string &str)
 {
 	this->_buffer += str;
+}
+
+void	Client::addUsermode(char mode)
+{
+	if (this->_usermodes.find(mode) == std::string::npos)
+		this->_usermodes += mode;
+}
+
+void	Client::removeUsermode(char mode)
+{
+	size_t	pos = this->_usermodes.find(mode);
+
+	if (pos != std::string::npos)
+		this->_usermodes.erase(pos, 1);
 }
 
 void	Client::clearBuffer()
