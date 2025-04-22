@@ -459,24 +459,46 @@ void Server::privmsg(Message & message, Client &client) {
     //        ✓ERR_NOSUCHNICK
     //        ✓RPL_AWAY
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
-	if (message.getBufferDivided()[1].empty()) {
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args[1].empty()) {
 		this->sendToClient(client.getFd(), errNoRecipient(SERVER_NAME, client.getNickname(), \
 			"PRIVMSG"));
 		return;
 	}
-	if (message.getBufferDivided()[2].empty()) {
+	if (args[2].empty()) {
 		this->sendToClient(client.getFd(), errNoTextToSend(SERVER_NAME, client.getNickname()));
 		return;
 	}
 	try {
+		std::string messageText = args[2];
+		if (!messageText.empty() && messageText[0] == ':') {
+    		messageText = messageText.substr(1); // do we need to delete explicitly?
+		}
 		message.setReceiver();
-		Client receiver = message.getReceiver();
-		std::cout << "Receiver of PRIVMSG" + receiver.getNickname() << std::endl;
-		this->sendToClient(receiver.getFd(), message.getBufferDivided()[2]);
+		Client & receiver = message.getReceiver();
+		int flags = fcntl(receiver.getFd(), F_GETFL);
+		if (flags == -1) {
+		    std::cerr << "Invalid fd for receiver: " << receiver.getNickname() << std::endl;
+		    return;
+		}
+
+		std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
+		std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
+			+ "@" + client.getHostname();
+		// do we need to hangle other hostnames?
+        std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
+		
+		int sendResult = this->sendToClient(receiver.getFd(), privmsg);
+        if (sendResult == -1) {
+            std::cerr << "Failed to send message to fd: " << receiver.getFd() << ", errno: " << errno << std::endl;
+        } else {
+            std::cout << "Successfully sent " << sendResult << " bytes to fd: " << receiver.getFd() << std::endl;
+        }
 	}
 	catch (Message::NoSuchNick & e) {
 		sendToClient(client.getFd(), errNoSuchNick(SERVER_NAME, message.getSender(), \
-			message.getBufferDivided()[1]));
+			args[1]));
 	}
 };
 
@@ -514,10 +536,11 @@ void	Server::cap(Message &message, Client &client)
 	}
 }
 
-void	Server::sendToClient(int fd, const std::string &msg)
+int	Server::sendToClient(int fd, const std::string &msg)
 {
-	send(fd, msg.c_str(), msg.length(), 0);
+	int bytesSent = send(fd, msg.c_str(), msg.length(), 0);
 	std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
+	return bytesSent; // returning the number of bytes sent - for easier debugging
 }
 
 void	Server::welcomeMessages(Client &client)

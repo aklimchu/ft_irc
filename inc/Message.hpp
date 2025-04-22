@@ -11,7 +11,6 @@
 class Message {
 	public:
 		Message(void) = delete;
-		//Message(std::string buffer, std::map<int, Client> clients_map);
 		Message(std::string buffer, const std::map<int, Client> &clients_map); // Changed to take a const reference
 		Message(Message const & src) = delete;
 		~Message(void) = default;
@@ -45,7 +44,6 @@ class Message {
 		const std::vector<std::string> _function_names = \
 			{"PASS", "NICK", "USER", "JOIN", "PART", "TOPIC", "INVITE", \
 			"KICK", "QUIT", "MODE", "PRIVMSG", "PING", "CAP"};
-		//std::map<int, Client>	_clients_map;
-		const std::map<int, Client> &_clients_map; // Changed to const reference
+		const std::map<int, Client> &_clients_map;
 
 };

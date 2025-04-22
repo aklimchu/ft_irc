@@ -2,11 +2,6 @@
 
 //--------------------------------Constructors--------------------------------//
 
-/*Message::Message(std::string buffer, std::map<int, Client>	clients_map) : _buffer(buffer), _sender("SenderX"), \
-	_command("Unknown"), _clients_map(clients_map) {
-}*/
-
-// Changed to take clients_map as const reference
 Message::Message(std::string buffer, const std::map<int, Client>	&clients_map) : _buffer(buffer), _sender("SenderX"), \
 	_command("Unknown"), _clients_map(clients_map) {
 }
