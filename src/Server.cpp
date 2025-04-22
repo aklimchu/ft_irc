@@ -254,21 +254,15 @@ void Server::nick(Message & message, Client &client) {
 	}
 	else // Nick reset
 	{
-		//std::string	str = ":" + nick + " NICK :" + newNick + "\r\n";
 		std::string	user = client.getUsername().empty() ? "user" : client.getUsername();
 		std::string	host = "localhost"; // Placeholder?
 		std::string	str = ":" + nick + "!" + user + "@" + host + " NICK :" + newNick + "\r\n";
 
-		// Make the loop check shared channels between clients, and only send to the ones that share a channel!
+		// Check shared channels between clients, and only send to the ones that share a channel!
 		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); it++)
 		{
 			if (it->first == fd || this->sharedChannel(client, it->second))
-			{
 				sendToClient(it->first, str);
-				//std::cout << "Sent to client fd: " << it->first << " client nick: "
-				//<< it->second.getNickname() << std::endl;
-				//std::cout << "Sent to client: " << str << std::endl; // Debug
-			}
 			
 		}
 	}
@@ -327,9 +321,12 @@ void Server::join(Message & message, Client &client) {
     //        RPL_TOPIC
 	std::cout << "JOIN command by " << message.getSender() << std::endl;
 
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+
 	if (message.getBufferDivided().size() < 2)
 	{
-		sendToClient(client.getFd(), errNeedMoreParams(SERVER_NAME, client.getNickname(), "JOIN"));
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "JOIN"));
 		return ;
 	}
 	std::string	channelName = message.getBufferDivided()[1];
@@ -343,7 +340,7 @@ void Server::join(Message & message, Client &client) {
 	client.joinChannel(channelName);
 	
 	// JOIN message to all channel members
-	std::string	str = ":" + client.getNickname() + " JOIN :" + channelName + "\r\n";
+	std::string	str = ":" + nick + " JOIN :" + channelName + "\r\n";
 	const std::set<Client *>	&users = this->_channels[channelName].getUsers();
 
 	for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
@@ -356,8 +353,8 @@ void Server::join(Message & message, Client &client) {
 		names += (*it)->getNickname() + " ";
 	if (!names.empty())
 		names.pop_back();
-	sendToClient(client.getFd(), rplNamReply(SERVER_NAME, client.getNickname(), channelName, names));
-	sendToClient(client.getFd(), rplEndOfNames(SERVER_NAME, client.getNickname(), channelName));
+	sendToClient(fd, rplNamReply(SERVER_NAME, nick, channelName, names));
+	sendToClient(fd, rplEndOfNames(SERVER_NAME, nick, channelName));
 };
 
 void Server::part(Message & message, Client &client) {
