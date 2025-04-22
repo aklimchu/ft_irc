@@ -267,7 +267,7 @@ void Server::nick(Message & message, Client &client) {
 				sendToClient(it->first, str);
 				//std::cout << "Sent to client fd: " << it->first << " client nick: "
 				//<< it->second.getNickname() << std::endl;
-				std::cout << "Sent to client: " << str << std::endl; // Debug
+				//std::cout << "Sent to client: " << str << std::endl; // Debug
 			}
 			
 		}
@@ -348,6 +348,16 @@ void Server::join(Message & message, Client &client) {
 
 	for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
 		sendToClient((*it)->getFd(), str);
+
+	// Handle sending 353 RPL_NAMREPLY and 366 RPL_ENDOFNAMES
+	// Add "@" prefix to operator names?
+	std::string	names;
+	for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
+		names += (*it)->getNickname() + " ";
+	if (!names.empty())
+		names.pop_back();
+	sendToClient(client.getFd(), rplNamReply(SERVER_NAME, client.getNickname(), channelName, names));
+	sendToClient(client.getFd(), rplEndOfNames(SERVER_NAME, client.getNickname(), channelName));
 };
 
 void Server::part(Message & message, Client &client) {
@@ -507,6 +517,7 @@ void	Server::cap(Message &message, Client &client)
 void	Server::sendToClient(int fd, const std::string &msg)
 {
 	send(fd, msg.c_str(), msg.length(), 0);
+	std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
 }
 
 void	Server::welcomeMessages(Client &client)

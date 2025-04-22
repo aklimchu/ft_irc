@@ -29,6 +29,20 @@ inline std::string	rplMyInfo(const std::string &server, const std::string &nick,
 	return (":" + server + " 004 " + nick + " " + server + " 1.0 " + userModes + " " + channelModes + "\r\n");
 }
 
+// 353 RPL_NAMREPLY
+inline std::string	rplNamReply(const std::string &server, const std::string &nick,
+	const std::string &channel, const std::string &namesList)
+{
+	return (":" + server + " 353 " + nick + " = " + channel + " :" + namesList + "\r\n");
+}
+
+// 366 RPL_ENDOFNAMES
+inline std::string	rplEndOfNames(const std::string &server, const std::string &nick,
+	const std::string &channel)
+{
+	return (":" + server + " 366 " + nick + " " + channel + " :End of /NAMES list.\r\n");
+}
+
 // 431 ERR_NONICKNAMEGIVEN
 inline std::string	errNoNicknameGiven(const std::string &server, const std::string &nick)
 {
