@@ -334,7 +334,7 @@ void Server::join(Message & message, Client &client) {
 	}
 	std::string	channelName = message.getBufferDivided()[1];
 
-	// If it doesnt exist, create it
+	// If it doesnt exist, create it (the first member should be set as operator?)
 	if (this->_channels.find(channelName) == this->_channels.end())
 	{
 		this->_channels[channelName] = Channel(channelName);
