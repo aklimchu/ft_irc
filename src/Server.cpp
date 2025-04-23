@@ -468,36 +468,77 @@ void Server::privmsg(Message & message, Client &client) {
 		return;
 	}
 	try {
-		std::string messageText = args[2];
-		if (!messageText.empty() && messageText[0] == ':') {
-    		messageText = messageText.substr(1); // do we need to delete explicitly?
+		if (args[2][0] == '#') {
+			broadcastMessageToChannel(args, message, client);
 		}
-		message.setReceiver();
-		Client & receiver = message.getReceiver();
-		int flags = fcntl(receiver.getFd(), F_GETFL);
-		if (flags == -1) {
-		    std::cerr << "Invalid fd for receiver: " << receiver.getNickname() << std::endl;
-		    return;
+		else {
+			sendMessageToClient(args, message, client);
 		}
-
-		std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
-		std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
-			+ "@" + client.getHostname();
-		// do we need to handle other hostnames?
-        std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
-		
-		int sendResult = this->sendToClient(receiver.getFd(), privmsg);
-        if (sendResult == -1) {
-            std::cerr << "Failed to send message to fd: " << receiver.getFd() << ", errno: " << errno << std::endl;
-        } else {
-            std::cout << "Successfully sent " << sendResult << " bytes to fd: " << receiver.getFd() << std::endl;
-        }
 	}
 	catch (Message::NoSuchNick & e) {
 		sendToClient(client.getFd(), errNoSuchNick(SERVER_NAME, message.getSender(), \
 			args[1]));
 	}
 };
+
+void Server::sendMessageToClient(std::vector<std::string> & args, Message & message, Client &client) {
+	std::string messageText = args[2];
+	if (messageText[0] == ':') {
+    	messageText = messageText.substr(1); // do we need to delete explicitly?
+	}
+
+	message.setReceiverClient();
+	Client & receiver = message.getReceiverClient();
+
+	int flags = fcntl(receiver.getFd(), F_GETFL);
+	if (flags == -1) {
+	    std::cerr << "Invalid fd for receiver: " << receiver.getNickname() << std::endl;
+	    return;
+	}
+	std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
+	std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
+		+ "@" + client.getHostname();
+	// do we need to handle other hostnames?
+    std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
+	
+	int sendResult = this->sendToClient(receiver.getFd(), privmsg);
+    if (sendResult == -1) {
+        std::cerr << "Failed to send message to fd: " << receiver.getFd() << ", errno: " << errno << std::endl;
+    } else {
+        std::cout << "Successfully sent " << sendResult << " bytes to fd: " << receiver.getFd() << std::endl;
+    }
+}
+
+void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message & message, Client &client) {
+	std::string messageText = args[2];
+	if (messageText[0] == ':') {
+    	messageText = messageText.substr(1); // do we need to delete explicitly?
+	}
+
+	message.setReceiverChannel(this->_channels);
+	Channel & targetChannel = message.getReceiverChannel();
+
+	//check if Client has permissions to send to this channel
+	//do we need to send back to original sender?
+
+	const std::set<Client *> & targetUsers = targetChannel.getUsers();
+	
+	std::set<Client *>::iterator itr;
+
+	for (itr = targetUsers.begin(); itr != targetUsers.end(); itr++) {
+		std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
+		+ "@" + client.getHostname();
+		// do we need to handle other hostnames?
+    	std::string privmsg = senderPrefix + " PRIVMSG " + targetChannel.getName() + " :" + messageText + "\r\n";
+		
+		int sendResult = this->sendToClient((**itr).getFd(), privmsg);
+    	if (sendResult == -1) {
+    	    std::cerr << "Failed to send message to fd: " << (**itr).getFd() << ", errno: " << errno << std::endl;
+    	} else {
+    	    std::cout << "Successfully sent " << sendResult << " bytes to fd: " << (**itr).getFd() << std::endl;
+    	}
+	}
+}
 
 void	Server::ping(Message &message, Client &client)
 {

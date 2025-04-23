@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include "Client.hpp"
+#include "Channel.hpp"
 #include "server_replies.hpp"
 
 #define SERVER_NAME "ircserv"
@@ -21,11 +22,13 @@ class Message {
 		int parseBuffer(void);
 		const std::string& getCommand(void) const;
 		const std::string& getSender(void) const;
-		Client & getReceiver(void);
+		Client & getReceiverClient(void);
+		Channel & getReceiverChannel(void);
 		std::vector<std::string>& getBufferDivided(void);
 
 		void	setSender(const std::string &sender);
-		void	setReceiver(void);
+		void	setReceiverClient(void);
+		void	setReceiverChannel(std::map<std::string, Channel>	& _channels);
 
 		class NoSuchNick : public std::exception {
 			public:
@@ -38,7 +41,8 @@ class Message {
 		std::string _buffer;
 		std::vector<std::string> _buffer_divided;
 		std::string _sender;
-		Client		_receiver;
+		Client		_receiver_client;
+		Channel		_receiver_channel;
 		// payload
 		std::string _command;
 		const std::vector<std::string> _function_names = \

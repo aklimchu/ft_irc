@@ -43,8 +43,12 @@ const std::string & Message::getSender(void) const {
 	return(this->_sender);
 }
 
-Client & Message::getReceiver(void) {
-	return(this->_receiver);
+Client & Message::getReceiverClient(void) {
+	return(this->_receiver_client);
+}
+
+Channel & Message::getReceiverChannel(void) {
+	return(this->_receiver_channel);
 }
 
 std::vector<std::string> & Message::getBufferDivided(void) {
@@ -56,11 +60,11 @@ void	Message::setSender(const std::string &sender)
 	this->_sender = sender;
 }
 
-void	Message::setReceiver(void)
+void	Message::setReceiverClient(void)
 {
-	// what if channel?
 	std::pair<int, Client> found_pair;
 	bool found = false;
+
 	for (const auto& pair : _clients_map) {
 		if (pair.second.getNickname() == _buffer_divided[1]) {
 			found_pair = pair;
@@ -68,11 +72,36 @@ void	Message::setReceiver(void)
 			break;
 		}
 	}
-	
+
 	if (found) {
-		this->_receiver = found_pair.second;
-    } else {
+		this->_receiver_client = found_pair.second;
+    }
+	else {
 		throw Message::NoSuchNick();
 	}
 
+}
+
+void	Message::setReceiverChannel(std::map<std::string, Channel>	& _channels) {
+	std::pair<std::string, Channel> found_pair;
+	bool found = false;
+	
+	for (auto& pair : _channels) {
+		std::cout << "Channel name: "<< pair.first << std::endl;
+	}
+
+	for (auto& pair : _channels) {
+		if (pair.first == _buffer_divided[1]) {
+			found_pair = pair;
+			found = true;
+			break;
+		}
+	}
+
+	if (found) {
+		this->_receiver_channel = found_pair.second;
+    }
+	else {
+		throw Message::NoSuchNick();
+	}
 }

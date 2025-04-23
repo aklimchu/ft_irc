@@ -46,6 +46,8 @@ class Server {
 		void	welcomeMessages(Client &client);
 		const std::map<int, Client> &getClients(void) const; // Added to return const reference
 		bool	sharedChannel(const Client &a, const Client &b) const;
+		void 	sendMessageToClient(std::vector<std::string> & args, Message & message, Client &client);
+		void 	broadcastMessageToChannel(std::vector<std::string> & args, Message & message, Client &client);
 
 		void	pass(Message & message, Client &client);
 		void	nick(Message & message, Client &client);
