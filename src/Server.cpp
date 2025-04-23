@@ -590,7 +590,7 @@ void	Server::whois(Message &message, Client &client)
 	sendToClient(fd, rplEndOfWhois(SERVER_NAME, nick, targetNick));
 }
 
-void	Server::sendToClient(int fd, const std::string &msg)
+int	Server::sendToClient(int fd, const std::string &msg)
 {
 	int bytesSent = send(fd, msg.c_str(), msg.length(), 0);
 	std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
