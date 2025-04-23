@@ -486,7 +486,7 @@ void Server::privmsg(Message & message, Client &client) {
 		std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
 		std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
 			+ "@" + client.getHostname();
-		// do we need to hangle other hostnames?
+		// do we need to handle other hostnames?
         std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
 		
 		int sendResult = this->sendToClient(receiver.getFd(), privmsg);
