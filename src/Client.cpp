@@ -1,12 +1,12 @@
 #include "Client.hpp"
 
-Client::Client() : _fd(-1), _registered(false), _usernameOK(false), \
-	_nicknameOK(false), _passwdOK(false)
+Client::Client() : _fd(-1), _hostname("localhost"), _registered(false), 
+	_usernameOK(false), _nicknameOK(false), _passwdOK(false)
 {
 }
 
-Client::Client(int fd) : _fd(fd), _registered(false), _usernameOK(false), \
-	_nicknameOK(false), _passwdOK(false)
+Client::Client(int fd) : _fd(fd), _hostname("localhost"), _registered(false), \
+	_usernameOK(false), _nicknameOK(false), _passwdOK(false)
 {
 }
 
@@ -43,6 +43,11 @@ const std::string	&Client::getRealname() const
 const std::string	&Client::getUsermodes() const
 {
 	return (this->_usermodes);
+}
+
+const std::string	&Client::getHostname() const
+{
+	return (this->_hostname);
 }
 
 bool	Client::isRegistered() const

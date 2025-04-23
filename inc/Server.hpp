@@ -42,7 +42,7 @@ class Server {
 		void	executeCommand(const std::string &buffer, Client &client);
 		void	handleNewClient();
 		void	handleOldClient(size_t &i);
-		void	sendToClient(int fd, const std::string &msg);
+		int		sendToClient(int fd, const std::string &msg);
 		void	welcomeMessages(Client &client);
 		const std::map<int, Client> &getClients(void) const; // Added to return const reference
 		bool	sharedChannel(const Client &a, const Client &b) const;
