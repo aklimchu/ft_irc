@@ -14,6 +14,7 @@ class	Client
 		std::string	_realname;
 		std::string _buffer;
 		std::string	_usermodes;
+		std::string	_hostname;
 		bool		_registered;
 		bool		_usernameOK;
 		bool		_nicknameOK;
@@ -33,6 +34,7 @@ class	Client
 		const std::string	&getRealname() const;
 		/*const*/ std::string	&getBuffer() /*const*/;
 		const std::string	&getUsermodes() const;
+		const std::string	&getHostname() const;
 		bool				isRegistered() const;
 		bool				isPasswdOK() const;
 		bool				isUsernameOK(void);
@@ -44,6 +46,7 @@ class	Client
 		void	setBuffer(const std::string &str);
 		void	addUsermode(char mode);
 		void	removeUsermode(char mode);
+		void	setHostname(const std::string &str);
 		void	appendBuffer(const std::string &str);
 		void	clearBuffer();
 		void	setRegistered(bool value);

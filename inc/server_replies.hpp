@@ -29,6 +29,34 @@ inline std::string	rplMyInfo(const std::string &server, const std::string &nick,
 	return (":" + server + " 004 " + nick + " " + server + " 1.0 " + userModes + " " + channelModes + "\r\n");
 }
 
+// 311 RPL_WHOISUSER
+inline std::string	rplWhoisUser(const std::string &server, const std::string &requester,
+	const std::string &nick, const std::string &user, const std::string &host, const std::string &realname)
+{
+	return (":" + server + " 311 " + requester + " " + nick + " " + user + " " + host + " * :" + realname + "\r\n");
+}
+
+// 312 RPL_WHOISSERVER
+inline std::string	rplWhoisServer(const std::string &server, const std::string &requester,
+	const std::string &nick)
+{
+	return (":" + server + " 312 " + requester + " " + nick + " " + server + " :ft_irc server\r\n");
+}
+
+// 318 RPL_ENDOFWHOIS
+inline std::string	rplEndOfWhois(const std::string &server, const std::string &requester,
+	const std::string &nick)
+{
+	return (":" + server + " 318 " + requester + " " + nick + " :End of WHOIS list\r\n");
+}
+
+// 319 RPL_WHOISCHANNELS
+inline std::string	rplWhoisChannels(const std::string &server, const std::string &requester,
+	const std::string &nick, const std::string &channels)
+{
+	return (":" + server + " 319 " + requester + " " + nick + " :" + channels + "\r\n");
+}
+
 // 353 RPL_NAMREPLY
 inline std::string	rplNamReply(const std::string &server, const std::string &nick,
 	const std::string &channel, const std::string &namesList)

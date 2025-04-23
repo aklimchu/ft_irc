@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <map>
 #include <unordered_map>
+#include <arpa/inet.h>
 #include "Client.hpp"
 #include "Message.hpp"
 #include "Channel.hpp"
@@ -46,6 +47,7 @@ class Server {
 		void	welcomeMessages(Client &client);
 		const std::map<int, Client> &getClients(void) const; // Added to return const reference
 		bool	sharedChannel(const Client &a, const Client &b) const;
+		std::string	getIP(int fd);
 
 		void	pass(Message & message, Client &client);
 		void	nick(Message & message, Client &client);
@@ -60,6 +62,7 @@ class Server {
 		void	privmsg(Message & message, Client &client);
 		void	ping(Message &message, Client &client);
 		void	cap(Message &message, Client &client);
+		void	whois(Message &message, Client &client);
 		//do we need oper function?
 
 		class SocketError : public std::exception {
@@ -112,6 +115,7 @@ class Server {
 			{"MODE", &Server::mode},
 			{"PRIVMSG", &Server::privmsg},
 			{"PING", &Server::ping},
-			{"CAP", &Server::cap}
+			{"CAP", &Server::cap},
+			{"WHOIS", &Server::whois}
 		};
 };

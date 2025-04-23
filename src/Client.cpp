@@ -45,6 +45,11 @@ const std::string	&Client::getUsermodes() const
 	return (this->_usermodes);
 }
 
+const std::string	&Client::getHostname() const
+{
+	return (this->_hostname);
+}
+
 bool	Client::isRegistered() const
 {
 	return (this->_registered);
@@ -84,6 +89,11 @@ void	Client::setRealname(const std::string &str)
 void	Client::setBuffer(const std::string &str)
 {
 	this->_buffer = str;
+}
+
+void	Client::setHostname(const std::string &str)
+{
+	this->_hostname = str;
 }
 
 void	Client::appendBuffer(const std::string &str)
