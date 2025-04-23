@@ -91,6 +91,11 @@ void	Client::setBuffer(const std::string &str)
 	this->_buffer = str;
 }
 
+void	Client::setHostname(const std::string &str)
+{
+	this->_hostname = str;
+}
+
 void	Client::appendBuffer(const std::string &str)
 {
 	this->_buffer += str;

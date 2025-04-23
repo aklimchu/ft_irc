@@ -43,7 +43,7 @@ class Message {
 		std::string _command;
 		const std::vector<std::string> _function_names = \
 			{"PASS", "NICK", "USER", "JOIN", "PART", "TOPIC", "INVITE", \
-			"KICK", "QUIT", "MODE", "PRIVMSG", "PING", "CAP"};
+			"KICK", "QUIT", "MODE", "PRIVMSG", "PING", "CAP", "WHOIS"};
 		const std::map<int, Client> &_clients_map;
 
 };

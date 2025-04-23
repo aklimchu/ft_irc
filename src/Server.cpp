@@ -70,6 +70,7 @@ void	Server::handleNewClient()
 	this->_pollFds.push_back(new_client);
 
 	this->_clients[client_socket] = Client(client_socket);
+	this->_clients[client_socket].setHostname(this->getIP(client_socket));
 
 	std::cout << "New client connected" << std::endl;
 }
@@ -255,7 +256,7 @@ void Server::nick(Message & message, Client &client) {
 	else // Nick reset
 	{
 		std::string	user = client.getUsername().empty() ? "user" : client.getUsername();
-		std::string	host = "localhost"; // Placeholder?
+		std::string	host = client.getHostname();//"localhost"; // Placeholder?
 		std::string	str = ":" + nick + "!" + user + "@" + host + " NICK :" + newNick + "\r\n";
 
 		// Check shared channels between clients, and only send to the ones that share a channel!
@@ -272,31 +273,36 @@ void Server::user(Message & message, Client &client) {
 	// Numeric Replies:
 
     //        ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
+	std::cout << "USER command by " << message.getSender() << std::endl;
 
-	int			fd = client.getFd();
-	std::string	nick = client.getNickname().empty() ? "*" : client.getNickname();
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
 
 	if (!client.isPasswdOK())
 	{
 		sendToClient(fd, errPasswdMismatch(SERVER_NAME));
 		return ;
 	}
-
 	if (client.isRegistered())
 	{
 		sendToClient(fd, errAlreadyRegistered(SERVER_NAME, nick));
 		return ;
 	}
-
-	std::cout << "USER command by " << message.getSender() << std::endl;
-
-	if (message.getBufferDivided().size() < 2)
+	if (args.size() < 2)
 	{
 		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "USER"));
 		return ;
 	}
 
-	client.setUsername(message.getBufferDivided()[1]);
+	std::string	realname = args[4];
+
+	client.setUsername(args[1]);
+	for (size_t i = 5; i < args.size(); i++) // Extract real name from the args
+		realname += " " + args[i];
+	if (!realname.empty() && realname[0] == ':')
+		realname.erase(0, 1);
+	client.setRealname(realname);
 	client.setUsernameOK(true);
 	
 	if (client.isNicknameOK() == true) {
@@ -533,7 +539,58 @@ void	Server::cap(Message &message, Client &client)
 	}
 }
 
-int	Server::sendToClient(int fd, const std::string &msg)
+void	Server::whois(Message &message, Client &client)
+{
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() < 2)
+	{
+		//sendToClient(fd, errNoNicknameGiven(SERVER_NAME, nick));
+		// ERR_NEEDMOREPARAMS ???
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "WHOIS")); // Correct?
+		return ;
+	}
+
+	std::string								targetNick = args[1];
+	std::map<int, Client>::const_iterator	it;
+	
+	// Search for the target client
+	for (it = this->_clients.begin(); it != this->_clients.end(); it++)
+	{
+		if (it->second.getNickname() == targetNick)
+			break;
+	}
+	if (it == _clients.end()) // Target client not found
+	{
+		sendToClient(fd, errNoSuchNick(SERVER_NAME, nick, targetNick));
+		sendToClient(fd, rplEndOfWhois(SERVER_NAME, nick, targetNick));
+		return ;
+	}
+
+	// Build a list of channels
+	const Client	&target = it->second;
+	std::string		channels;
+	const std::set<std::string>	&channelsSet = target.getChannels();
+
+	for (std::set<std::string>::const_iterator it = channelsSet.begin(); it != channelsSet.end(); it++)
+		channels += *it + " ";
+	if (!channels.empty())
+		channels.pop_back();
+
+	// Send replies back to requesting client
+	std::string	host = client.getHostname();//"localhost"; // Placeholder?
+	targetNick = target.getNickname();
+
+	sendToClient(fd, rplWhoisUser(SERVER_NAME, nick, targetNick, target.getUsername(), host, target.getRealname()));
+	sendToClient(fd, rplWhoisServer(SERVER_NAME, nick, targetNick));
+	if (!channels.empty())
+		sendToClient(fd, rplWhoisChannels(SERVER_NAME, nick, targetNick, channels));
+	sendToClient(fd, rplEndOfWhois(SERVER_NAME, nick, targetNick));
+}
+
+void	Server::sendToClient(int fd, const std::string &msg)
 {
 	int bytesSent = send(fd, msg.c_str(), msg.length(), 0);
 	std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
@@ -569,4 +626,21 @@ bool	Server::sharedChannel(const Client &a, const Client &b) const
 			return (true);
 	}
 	return (false);
+}
+
+std::string	Server::getIP(int fd)
+{
+	struct sockaddr_in	addr;
+	socklen_t			len = sizeof(addr);
+
+	// Extract data from the fd(socket) into the addr struct
+	if (getpeername(fd, (struct sockaddr *)&addr, &len) == -1)
+		return ("unknown");
+
+	char	ipStr[INET_ADDRSTRLEN];
+
+	// Convert from binary to string
+	if (!inet_ntop(AF_INET, &addr.sin_addr, ipStr, sizeof(ipStr)))
+		return ("unknown");
+	return (std::string(ipStr));
 }
