@@ -75,17 +75,29 @@ void	Server::handleNewClient()
 	std::cout << "New client connected" << std::endl;
 }
 
+/* Erasing from the pollFds can only be done here, and the index i has to be decremented,
+so that the loop logic in startServer() stays consistent!
+Also the hasQuit flag has to be checked here, so that already cleaned(in quit()) memory
+will not be attempted to cleaned again!*/
 void	Server::handleOldClient(size_t &i)
 {
 	char	buffer[1024];
+	int		fd = this->_pollFds[i].fd;
+	Client	&client = this->_clients[fd];
 
 	std::memset(buffer, 0, sizeof(buffer));
 	ssize_t	bytes_read = recv(this->_pollFds[i].fd, buffer, sizeof(buffer) - 1, 0);
 	if (bytes_read <= 0) // Disconnet/Error
 	{
 		std::cout << "Client disconnected/Error happened" << std::endl;
-		close(this->_pollFds[i].fd);
-		this->_clients.erase(this->_pollFds[i].fd); // Have to erase this first before below!!!
+		// Client didnt send quit, have to call quit manually
+		if (this->_clients.find(fd) != _clients.end() && !client.getHasQuit())
+		{
+			Message	quitMsg("QUIT :Connection closed", this->_clients);
+			this->quit(quitMsg, client);
+		}
+		close(fd);
+		this->_clients.erase(fd); // Have to erase this first before below!!!
 		this->_pollFds.erase(this->_pollFds.begin() + i);
 		i--;
 	}
@@ -93,7 +105,6 @@ void	Server::handleOldClient(size_t &i)
 	{
 		std::cout << "Data received:" << buffer << std::endl;
 
-		Client	&client = this->_clients[this->_pollFds[i].fd];
 		client.appendBuffer(buffer);
 
 		std::string	&buf = client.getBuffer();
@@ -256,7 +267,7 @@ void Server::nick(Message & message, Client &client) {
 	else // Nick reset
 	{
 		std::string	user = client.getUsername().empty() ? "user" : client.getUsername();
-		std::string	host = client.getHostname();//"localhost"; // Placeholder?
+		std::string	host = client.getHostname();
 		std::string	str = ":" + nick + "!" + user + "@" + host + " NICK :" + newNick + "\r\n";
 
 		// Check shared channels between clients, and only send to the ones that share a channel!
@@ -264,7 +275,6 @@ void Server::nick(Message & message, Client &client) {
 		{
 			if (it->first == fd || this->sharedChannel(client, it->second))
 				sendToClient(it->first, str);
-			
 		}
 	}
 };
@@ -406,7 +416,42 @@ void Server::kick(Message & message, Client &client) {
 
 void Server::quit(Message & message, Client &client) {
 	std::cout << "QUIT command by " << message.getSender() << std::endl;
-	(void)client;
+
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::string					quitMsg = "Client Quit"; // default quit msg
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() > 1) // Build the quit msg, if client sent something specific
+	{
+		quitMsg = args[1];
+		if (quitMsg[0] == ':')
+			quitMsg = quitMsg.substr(1);
+		for (size_t i = 2; i < args.size(); i++)
+			quitMsg += " " + args[i];
+	}
+
+	std::string	fullMsg = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname() + " QUIT :" + quitMsg + "\r\n";
+
+	// Check shared channels between clients, and only send to the ones that share a channel!
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); it++)
+	{
+		if (it->first != client.getFd() && this->sharedChannel(client, it->second))
+			sendToClient(it->first, fullMsg);
+	}
+
+	// Remove the quitting client from the channels it belongs to
+	for (std::set<std::string>::const_iterator it = client.getChannels().begin(); it != client.getChannels().end(); it++)
+	{
+		std::string	channelName = *it;
+		std::map<std::string, Channel>::iterator	it_2 = this->_channels.find(channelName);
+		if (it_2 != this->_channels.end())
+		{
+			it_2->second.removeUser(&client);
+			if (it_2->second.getUsers().empty()) // If the channel is left empty, it gets removed
+				this->_channels.erase(it_2);
+		}
+	}
+	client.setHasQuit(true);
 };
 
 void Server::mode(Message & message, Client &client) {
@@ -634,7 +679,7 @@ void	Server::whois(Message &message, Client &client)
 		channels.pop_back();
 
 	// Send replies back to requesting client
-	std::string	host = client.getHostname();//"localhost"; // Placeholder?
+	std::string	host = client.getHostname();
 	targetNick = target.getNickname();
 
 	sendToClient(fd, rplWhoisUser(SERVER_NAME, nick, targetNick, target.getUsername(), host, target.getRealname()));

@@ -1,12 +1,12 @@
 #include "Client.hpp"
 
 Client::Client() : _fd(-1), _hostname("localhost"), _registered(false), 
-	_usernameOK(false), _nicknameOK(false), _passwdOK(false)
+	_usernameOK(false), _nicknameOK(false), _passwdOK(false), _hasQuit(false)
 {
 }
 
 Client::Client(int fd) : _fd(fd), _hostname("localhost"), _registered(false), \
-	_usernameOK(false), _nicknameOK(false), _passwdOK(false)
+	_usernameOK(false), _nicknameOK(false), _passwdOK(false), _hasQuit(false)
 {
 }
 
@@ -68,6 +68,11 @@ bool	Client::isUsernameOK(void)
 bool	Client::isNicknameOK(void)
 {
 	return (this->_nicknameOK);
+}
+
+bool	Client::getHasQuit(void)
+{
+	return (this->_hasQuit);
 }
 
 //SETTERS:
@@ -138,6 +143,11 @@ void	Client::setUsernameOK(bool value)
 void	Client::setNicknameOK(bool value)
 {
 	this->_nicknameOK = value;
+}
+
+void	Client::setHasQuit(bool value)
+{
+	this->_hasQuit = value;
 }
 
 void	Client::joinChannel(const std::string &channelName)
