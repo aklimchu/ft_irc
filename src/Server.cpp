@@ -346,7 +346,8 @@ void Server::join(Message & message, Client &client) {
 	client.joinChannel(channelName);
 	
 	// JOIN message to all channel members
-	std::string	str = ":" + nick + " JOIN :" + channelName + "\r\n";
+	std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
+		+ " JOIN :" + channelName + "\r\n";
 	const std::set<Client *>	&users = this->_channels[channelName].getUsers();
 
 	for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
