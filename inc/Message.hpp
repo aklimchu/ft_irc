@@ -37,6 +37,13 @@ class Message {
 				}
 		};
 
+		class NoSuchChannel : public std::exception {
+			public:
+				virtual const char* what() const throw() {
+					return ("");
+				}
+		};
+
 	private:
 		std::string _buffer;
 		std::vector<std::string> _buffer_divided;

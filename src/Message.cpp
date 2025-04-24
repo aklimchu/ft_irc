@@ -102,6 +102,6 @@ void	Message::setReceiverChannel(std::map<std::string, Channel>	& _channels) {
 		this->_receiver_channel = found_pair.second;
     }
 	else {
-		throw Message::NoSuchNick();
+		throw Message::NoSuchChannel();
 	}
 }

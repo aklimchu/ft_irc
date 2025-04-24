@@ -144,3 +144,9 @@ inline std::string rplUModeIs(const std::string& server, const std::string& nick
 	const std::string& userMode) {
 	return ":" + server + " 221 " + nick + " " + userMode + "\r\n";
 }
+
+//403    ERR_NOSUCHCHANNEL
+inline std::string errNoSuchChannel(const std::string& server, \
+	const std::string& nick, const std::string& channel) {
+		return ":" + server + " 403 " + nick + " " + channel + " :No such channel\r\n";
+}
