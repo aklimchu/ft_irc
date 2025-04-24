@@ -474,7 +474,7 @@ void Server::privmsg(Message & message, Client &client) {
 		return;
 	}
 	try {
-		if (args[2][0] == '#') {
+		if (args[1][0] == '#') {
 			broadcastMessageToChannel(args, message, client);
 		}
 		else {
@@ -497,6 +497,7 @@ void Server::sendMessageToClient(std::vector<std::string> & args, Message & mess
     	messageText = messageText.substr(1);
 	}
 
+	// find needed client instance
 	message.setReceiverClient();
 	Client & receiver = message.getReceiverClient();
 
@@ -520,6 +521,7 @@ void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message 
     	messageText = messageText.substr(1);
 	}
 
+	// find the needed channel instance
 	message.setReceiverChannel(this->_channels);
 	Channel & targetChannel = message.getReceiverChannel();
 
@@ -538,6 +540,7 @@ void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message 
 	
 	std::set<Client *>::iterator itr;
 
+	// send message to the clients who joined the channel
 	for (itr = targetUsers.begin(); itr != targetUsers.end(); itr++) {
 		if (*itr != &client) {
 			std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
