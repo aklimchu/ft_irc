@@ -157,6 +157,14 @@ inline std::string rplAway(const std::string& server, const std::string& nick, \
 			away_autoreply + "\r\n";
 }
 
+//403    ERR_NOSUCHCHANNEL
+inline std::string errNoSuchChannel(const std::string& server, \
+	const std::string& nick, const std::string& channel) {
+		return ":" + server + " 403 " + nick + " " + channel + " :No such channel\r\n";
+}
+
+// MODE
+
 //501 ERR_UMODEUNKNOWNFLAG
 inline std::string errUModeUnknownFlag(const std::string& server, const std::string& nick) {
 		return ":" + server + " 501 " + nick + " :Unknown MODE flag\r\n";
@@ -173,8 +181,8 @@ inline std::string rplUModeIs(const std::string& server, const std::string& nick
 	return ":" + server + " 221 " + nick + " " + userMode + "\r\n";
 }
 
-//403    ERR_NOSUCHCHANNEL
-inline std::string errNoSuchChannel(const std::string& server, \
-	const std::string& nick, const std::string& channel) {
-		return ":" + server + " 403 " + nick + " " + channel + " :No such channel\r\n";
+//324    RPL_CHANNELMODEIS
+inline std::string rplChannelModeIs(const std::string& server, const std::string& nick, \
+	const std::string& channel, const std::string& channelModes) {
+	return ":" + server + " 324 " + nick + " " + channel + " " + channelModes + "\r\n";
 }

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <set>
+#include <map>
 
 class Channel {
 	public:
@@ -21,15 +22,19 @@ class Channel {
 		void						removeUser(Client *client);
 		bool						isUser(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
-
+		const std::string			getChannelModes() const;
+		void						addChannelModes(std::vector<std::string> &args, \
+										std::map<int, Client> &serverUsers);
+		void						removeChannelModes(std::vector<std::string> &args);
 		
 		private:
-			/* std::vector<Client*>		_operator;
-			std::vector<Client*>		_users;
-			std::vector<Client*>		_invite;
-			std::vector<Client*>		_voice;
-			size_t						_user_limit;
-			std::string					_password; */
+			/*std::set<Client*>			_invite;
+			std::set<Client*>			_voice; */
 			std::string					_name;
 			std::set<Client *>			_users;
+			std::string					_channelModes;
+			std::string					_channelParams;
+			std::set<Client*>			_operators;
+			size_t						_user_limit;
+			std::string					_password;
 };
