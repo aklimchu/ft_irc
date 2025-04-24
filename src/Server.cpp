@@ -464,46 +464,96 @@ void Server::privmsg(Message & message, Client &client) {
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
 	std::vector<std::string>	&args = message.getBufferDivided();
 
-	if (args[1].empty()) {
+	if (args.size() == 1 || args[1].empty()) {
 		this->sendToClient(client.getFd(), errNoRecipient(SERVER_NAME, client.getNickname(), \
 			"PRIVMSG"));
 		return;
 	}
-	if (args[2].empty()) {
+	if (args.size() < 3 || args[2].empty()) {
 		this->sendToClient(client.getFd(), errNoTextToSend(SERVER_NAME, client.getNickname()));
 		return;
 	}
 	try {
-		std::string messageText = args[2];
-		if (!messageText.empty() && messageText[0] == ':') {
-    		messageText = messageText.substr(1); // do we need to delete explicitly?
+		if (args[2][0] == '#') {
+			broadcastMessageToChannel(args, message, client);
 		}
-		message.setReceiver();
-		Client & receiver = message.getReceiver();
-		int flags = fcntl(receiver.getFd(), F_GETFL);
-		if (flags == -1) {
-		    std::cerr << "Invalid fd for receiver: " << receiver.getNickname() << std::endl;
-		    return;
+		else {
+			sendMessageToClient(args, message, client);
 		}
-
-		std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
-		std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
-			+ "@" + client.getHostname();
-		// do we need to handle other hostnames?
-        std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
-		
-		int sendResult = this->sendToClient(receiver.getFd(), privmsg);
-        if (sendResult == -1) {
-            std::cerr << "Failed to send message to fd: " << receiver.getFd() << ", errno: " << errno << std::endl;
-        } else {
-            std::cout << "Successfully sent " << sendResult << " bytes to fd: " << receiver.getFd() << std::endl;
-        }
 	}
 	catch (Message::NoSuchNick & e) {
 		sendToClient(client.getFd(), errNoSuchNick(SERVER_NAME, message.getSender(), \
 			args[1]));
 	}
+	catch (Message::NoSuchChannel & e) {
+		sendToClient(client.getFd(), errNoSuchChannel(SERVER_NAME, message.getSender(), \
+			args[1]));
+	}
 };
+
+void Server::sendMessageToClient(std::vector<std::string> & args, Message & message, Client &client) {
+	std::string messageText = args[2];
+	if (messageText[0] == ':') {
+    	messageText = messageText.substr(1);
+	}
+
+	message.setReceiverClient();
+	Client & receiver = message.getReceiverClient();
+
+	std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
+	std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
+		+ "@" + client.getHostname();
+	// do we need to handle other hostnames?
+    std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
+	
+	int sendResult = this->sendToClient(receiver.getFd(), privmsg);
+    if (sendResult == -1) {
+        std::cerr << "Failed to send message to fd: " << receiver.getFd() << ", errno: " << errno << std::endl;
+    } else {
+        std::cout << "Successfully sent " << sendResult << " bytes to fd: " << receiver.getFd() << std::endl;
+    }
+}
+
+void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message & message, Client &client) {
+	std::string messageText = args[2];
+	if (messageText[0] == ':') {
+    	messageText = messageText.substr(1);
+	}
+
+	message.setReceiverChannel(this->_channels);
+	Channel & targetChannel = message.getReceiverChannel();
+
+	//Check for modes like +n (no external messages), +m (only voiced/operator users can speak), or +b (bans).
+
+	/* if (!targetChannel.isUserInChannel(&client)) {
+    sendToClient(client.getFd(), errCannotSendToChan(SERVER_NAME, client.getNickname(), targetChannel.getName()));
+    return;
+	}
+	if (targetChannel.hasMode('m') && !targetChannel.isVoiced(&client) && !targetChannel.isOperator(&client)) {
+	    sendToClient(client.getFd(), errCannotSendToChan(SERVER_NAME, client.getNickname(), targetChannel.getName()));
+	    return;
+	} */
+
+	const std::set<Client *> & targetUsers = targetChannel.getUsers();
+	
+	std::set<Client *>::iterator itr;
+
+	for (itr = targetUsers.begin(); itr != targetUsers.end(); itr++) {
+		if (*itr != &client) {
+			std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
+			+ "@" + client.getHostname();
+			// do we need to handle other hostnames?
+    		std::string privmsg = senderPrefix + " PRIVMSG " + targetChannel.getName() + " :" + messageText + "\r\n";
+
+			int sendResult = this->sendToClient((**itr).getFd(), privmsg);
+    		if (sendResult == -1) {
+    		    std::cerr << "Failed to send message to fd: " << (**itr).getFd() << ", errno: " << errno << std::endl;
+    		} else {
+    		    std::cout << "Successfully sent " << sendResult << " bytes to fd: " << (**itr).getFd() << std::endl;
+    		}
+		}
+	}
+}
 
 void	Server::ping(Message &message, Client &client)
 {
