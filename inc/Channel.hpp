@@ -3,10 +3,13 @@
 #include <iostream>
 #include <vector>
 #include <Client.hpp>
+#include <server_replies.hpp>
 
 #include <string>
 #include <set>
 #include <map>
+
+#define SERVER_NAME "ircserv"
 
 class Channel {
 	public:
@@ -23,8 +26,15 @@ class Channel {
 		bool						isUser(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
 		const std::string			getChannelModes() const;
-		void						addChannelModes(std::vector<std::string> &args, \
-										std::map<int, Client> &serverUsers);
+
+		void addChannelModes(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client);
+		void addOperatorToChannel(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
+		void addKeyToChannel(std::vector<std::string> &args, Client &client, \
+			size_t &paramCount);
+		void addLimitToChannel(std::vector<std::string> &args, Client &client, \
+			size_t &paramCount);
 		void						removeChannelModes(std::vector<std::string> &args);
 		
 		private:

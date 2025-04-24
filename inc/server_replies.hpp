@@ -186,3 +186,18 @@ inline std::string rplChannelModeIs(const std::string& server, const std::string
 	const std::string& channel, const std::string& channelModes) {
 	return ":" + server + " 324 " + nick + " " + channel + " " + channelModes + "\r\n";
 }
+
+//441    ERR_USERNOTINCHANNEL
+inline std::string errUserNotInChannel(const std::string& server, \
+	const std::string& nick, const std::string& target, const std::string& channel) {
+		return ":" + server + " 441 " + nick + " " + target + " " + \
+			channel + " :They aren't on that channel\r\n";
+}
+
+//472    ERR_UNKNOWNMODE
+//              "<char> :is unknown mode char to me for <channel>"
+inline std::string errUnknownMode(const std::string& server, \
+	const std::string& nick, const char& mode, const std::string& channel) {
+	return ":" + server + " 472 " + nick + " " + mode + \
+		" :is unknown mode char to me for " + channel + "\r\n";
+}

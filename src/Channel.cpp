@@ -3,7 +3,8 @@
 //--------------------------------Constructors--------------------------------//
 
 Channel::Channel(): _channelModes(""), _channelParams("") {}
-Channel::Channel(const std::string &name) : _name(name), _channelModes(""), _channelParams("")
+Channel::Channel(const std::string &name) : _name(name), _channelModes(""), \
+	_channelParams("")
 {
 }
 
@@ -45,63 +46,105 @@ const	std::string	Channel::getChannelModes() const {
 }
 
 void	Channel::addChannelModes(std::vector<std::string> &args, \
-	std::map<int, Client> &serverUsers) {
+	std::map<int, Client> &serverUsers, Client &client) {
+	
+	//checking the privileges?
+	// ERR_CHANOPRIVSNEEDED
+	
 	size_t paramLimit = args.size() - 3;
 	if (paramLimit > 3) 
 		paramLimit = 3; // max 3 modes with optional parameters accepted
 	std::string	&mode = args[2];
 	size_t paramCount = 0;
 
+	// go symbol by symbol to add modes to the channel
 	for (size_t i = 1; i < mode.size(); i++)
 	{
+		//if mode[i] != ........
+		//ERR_UNKNOWNMODE
+
+		// i, t
 		if (mode[i] == 'i' || mode[i] == 't') {
 			_channelModes += mode[i];
+			continue;
 		}
 
-		if (mode[i] == 'k' || mode[i] == 'l') {
-		// consider ERR_NEEDMOREPARAMS
-			_channelModes += mode[i];
+		// check if enough parameters
+		if (args.size() < 3 + paramCount + 1) {
+			errNeedMoreParams(SERVER_NAME, client.getNickname(), "MODE");
+			return;
 		}
 
-		// +o is user-specific and is not part of the channel’s mode string
-		if (mode[i] == 'o') {
-			// check if enough parameters
-			if (args.size() < 3 + paramCount + 1) {
-				// ERR_NEEDMOREPARAMS
-				return;
-			}
-			
-			// check if user exists on the server
-			bool found = false;
-			for (const auto& pair : serverUsers) {
-				if (pair.second.getNickname() == args[3 + paramCount - 1]) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				// ERR_NOSUCHNICK
-				return;
-   			}
+		// moving to next parameter
+		if (paramCount == paramLimit) {
+			continue;
+		}
+		paramCount++;
 
-			paramCount++;
-			found = false;
-			if (paramCount <= paramLimit) {
-				for (const auto& result : _users) {
-					if (result->getNickname() == args[3 + paramCount - 1]) {
-						Client & client = *result;
-						_operators.insert(&client); // should we also set privileges to client?
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					// ERR_USERNOTINCHANNEL
-					return;
-				}
-			}
-		}	
+		// k, l, o
+		if (mode[i] == 'k') {
+			addKeyToChannel(args, client, paramCount);
+		}
+		else if (mode[i] == 'l') {
+			addLimitToChannel(args, client, paramCount);
+		}
+		else if (mode[i] == 'o') {
+			addOperatorToChannel(args, serverUsers, client, paramCount);
+		}
 	}
+}
+
+void	Channel::addOperatorToChannel(std::vector<std::string> &args, \
+	std::map<int, Client> &serverUsers, Client &client, size_t &paramCount) {
+	// check if user exists on the server
+	bool found = false;
+	for (const auto& pair : serverUsers) {
+		if (pair.second.getNickname() == args[3 + paramCount - 1]) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		errNoSuchNick(SERVER_NAME, client.getNickname(), args[3 + paramCount - 1]);
+		return;
+   	}
+
+	// check if user exists in the channel and update privileges
+	found = false;
+	for (const auto& result : _users) {
+		if (result->getNickname() == args[3 + paramCount - 1]) {
+			Client & client = *result;
+			_operators.insert(&client); // should we also set privileges to client?
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		errUserNotInChannel(SERVER_NAME, client.getNickname(), \
+			args[3 + paramCount - 1], this->getName());
+		return;
+	}
+}
+
+void Channel::addKeyToChannel(std::vector<std::string> &args, Client &client, \
+	size_t &paramCount) {
+	// ERR_KEYSET (467) - if keyset is already set
+
+	_channelModes += 'k';
+	//...
+}
+
+void Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, \
+	size_t &paramCount) {
+	//check if limit is positive integer
+	if (std::atoi(args[3 + paramCount - 1].c_str()) <= 0) {
+		//ERR_UNKNOWNMODE // is it specific enough?
+		errUnknownMode(SERVER_NAME, client.getNickname(), 'l', this->getName());
+		return;
+	}
+
+	_channelModes += 'l';
+	//...
 }
 
 void	Channel::removeChannelModes(std::vector<std::string> &args) {

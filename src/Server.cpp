@@ -398,7 +398,7 @@ void Server::kick(Message & message, Client &client) {
 
     //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_BADCHANMASK                 ERR_CHANOPRIVSNEEDED
-    //        ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
+    //        ✓ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
 	std::cout << "KICK command by " << message.getSender() << std::endl;
 	(void)client;
 };
@@ -415,7 +415,7 @@ void Server::mode(Message & message, Client &client) {
     //        ✓ERR_UMODEUNKNOWNFLAG            ✓RPL_UMODEIS
 		// 	  ERR_KEYSET
         //    ERR_NOCHANMODES                 ERR_CHANOPRIVSNEEDED
-        //    ERR_USERNOTINCHANNEL            ERR_UNKNOWNMODE
+        //    ✓ERR_USERNOTINCHANNEL            ✓ERR_UNKNOWNMODE
         //    ✓RPL_CHANNELMODEIS
         //    RPL_BANLIST                     RPL_ENDOFBANLIST
         //    RPL_EXCEPTLIST                  RPL_ENDOFEXCEPTLIST
@@ -481,7 +481,7 @@ void Server::mode(Message & message, Client &client) {
 		/* for (size_t i = 1; i < mode.size(); i++)
 		{ */
 			if (mode[0] == '+')
-				channel.addChannelModes(args, _clients);
+				channel.addChannelModes(args, _clients, client);
 			else if (mode[0] == '-')
 				channel.removeChannelModes(args);
 		/* } */
