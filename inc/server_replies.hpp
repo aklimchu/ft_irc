@@ -195,9 +195,15 @@ inline std::string errUserNotInChannel(const std::string& server, \
 }
 
 //472    ERR_UNKNOWNMODE
-//              "<char> :is unknown mode char to me for <channel>"
 inline std::string errUnknownMode(const std::string& server, \
 	const std::string& nick, const char& mode, const std::string& channel) {
 	return ":" + server + " 472 " + nick + " " + mode + \
 		" :is unknown mode char to me for " + channel + "\r\n";
+}
+
+// 467    ERR_KEYSET
+inline std::string errKeySet(const std::string& server, \
+	const std::string& nick, const std::string& channel) {
+	return ":" + server + " 467 " + nick + " " + channel + \
+		" :Channel key already set\r\n";
 }

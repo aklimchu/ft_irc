@@ -128,23 +128,40 @@ void	Channel::addOperatorToChannel(std::vector<std::string> &args, \
 
 void Channel::addKeyToChannel(std::vector<std::string> &args, Client &client, \
 	size_t &paramCount) {
-	// ERR_KEYSET (467) - if keyset is already set
+	// check if password is already set
+	if (_channelModes.find('k')) {
+		errKeySet(SERVER_NAME, client.getNickname(), this->getName());
+		return;
+	}
 
 	_channelModes += 'k';
-	//...
+	
+	_password = args[3 + paramCount - 1];
+
+	if (_channelParams.length() != 0) {
+		_channelParams += " ";
+	}
+	_channelParams += args[3 + paramCount - 1];
 }
 
 void Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, \
 	size_t &paramCount) {
 	//check if limit is positive integer
-	if (std::atoi(args[3 + paramCount - 1].c_str()) <= 0) {
+	int new_limit = std::stoi(args[3 + paramCount - 1]);
+	if (new_limit <= 0) {
 		//ERR_UNKNOWNMODE // is it specific enough?
 		errUnknownMode(SERVER_NAME, client.getNickname(), 'l', this->getName());
 		return;
 	}
 
 	_channelModes += 'l';
-	//...
+	
+	_user_limit = new_limit;
+
+	if (_channelParams.length() != 0) {
+		_channelParams += " ";
+	}
+	_channelParams += args[3 + paramCount - 1];
 }
 
 void	Channel::removeChannelModes(std::vector<std::string> &args) {
