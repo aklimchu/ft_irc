@@ -157,6 +157,14 @@ inline std::string rplAway(const std::string& server, const std::string& nick, \
 			away_autoreply + "\r\n";
 }
 
+//403    ERR_NOSUCHCHANNEL
+inline std::string errNoSuchChannel(const std::string& server, \
+	const std::string& nick, const std::string& channel) {
+		return ":" + server + " 403 " + nick + " " + channel + " :No such channel\r\n";
+}
+
+// MODE
+
 //501 ERR_UMODEUNKNOWNFLAG
 inline std::string errUModeUnknownFlag(const std::string& server, const std::string& nick) {
 		return ":" + server + " 501 " + nick + " :Unknown MODE flag\r\n";
@@ -173,8 +181,36 @@ inline std::string rplUModeIs(const std::string& server, const std::string& nick
 	return ":" + server + " 221 " + nick + " " + userMode + "\r\n";
 }
 
-//403    ERR_NOSUCHCHANNEL
-inline std::string errNoSuchChannel(const std::string& server, \
+//324    RPL_CHANNELMODEIS
+inline std::string rplChannelModeIs(const std::string& server, const std::string& nick, \
+	const std::string& channel, const std::string& channelModes) {
+	return ":" + server + " 324 " + nick + " " + channel + " " + channelModes + "\r\n";
+}
+
+//441    ERR_USERNOTINCHANNEL
+inline std::string errUserNotInChannel(const std::string& server, \
+	const std::string& nick, const std::string& target, const std::string& channel) {
+		return ":" + server + " 441 " + nick + " " + target + " " + \
+			channel + " :They aren't on that channel\r\n";
+}
+
+//472    ERR_UNKNOWNMODE
+inline std::string errUnknownMode(const std::string& server, \
+	const std::string& nick, const char& mode, const std::string& channel) {
+	return ":" + server + " 472 " + nick + " " + mode + \
+		" :is unknown mode char to me for " + channel + "\r\n";
+}
+
+// 467    ERR_KEYSET
+inline std::string errKeySet(const std::string& server, \
 	const std::string& nick, const std::string& channel) {
-		return ":" + server + " 403 " + nick + " " + channel + " :No such channel\r\n";
+	return ":" + server + " 467 " + nick + " " + channel + \
+		" :Channel key already set\r\n";
+}
+
+// 482    ERR_CHANOPRIVSNEEDED
+inline std::string errChanOPrivNeeded(const std::string& server, \
+	const std::string& nick, const std::string& channel) {
+		return ":" + server + " 482 " + nick + " " + \
+			channel + " :You're not channel operator\r\n";
 }

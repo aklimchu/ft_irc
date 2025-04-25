@@ -412,7 +412,7 @@ void Server::kick(Message & message, Client &client) {
 
     //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_BADCHANMASK                 ERR_CHANOPRIVSNEEDED
-    //        ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
+    //        ✓ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
 	std::cout << "KICK command by " << message.getSender() << std::endl;
 	(void)client;
 };
@@ -462,6 +462,14 @@ void Server::mode(Message & message, Client &client) {
 
     //        ✓ERR_NEEDMOREPARAMS              ✓ERR_USERSDONTMATCH
     //        ✓ERR_UMODEUNKNOWNFLAG            ✓RPL_UMODEIS
+		// 	  ✓ERR_KEYSET
+        //    ERR_NOCHANMODES                 ERR_CHANOPRIVSNEEDED
+        //    ✓ERR_USERNOTINCHANNEL            ✓ERR_UNKNOWNMODE
+        //    ✓RPL_CHANNELMODEIS
+        //    RPL_BANLIST                     RPL_ENDOFBANLIST
+        //    RPL_EXCEPTLIST                  RPL_ENDOFEXCEPTLIST
+        //    RPL_INVITELIST                  RPL_ENDOFINVITELIST
+        //    RPL_UNIQOPIS
 	std::cout << "MODE command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -499,6 +507,40 @@ void Server::mode(Message & message, Client &client) {
 	}
 	else // Channel modes
 	{
+		// find needed channel instance
+		try {
+			message.setReceiverChannel(this->_channels);
+		}
+		catch (Message::NoSuchChannel & e) {
+			sendToClient(client.getFd(), errNoSuchChannel(SERVER_NAME, message.getSender(), \
+				args[1]));
+			return;
+		}
+		Channel & channel = message.getReceiverChannel();
+
+		// MODE with no parameters
+		if (args.size() == 2) // Only shows channel modes
+		{
+			sendToClient(fd, rplChannelModeIs(SERVER_NAME, nick, channel.getName(), \
+				"+" + channel.getChannelModes()));
+			return ;
+		}
+		// Add/remove mode(s)
+		std::string	&mode = args[2];
+		if (mode[0] == '+') {
+			std::string successfulChanges = channel.addChannelModes(args, _clients, client);
+			if (!successfulChanges.empty()) {
+				std::string senderPrefix = ":" + client.getNickname() + "!" + \
+					client.getUsername() + "@" + client.getHostname();
+				std::string toSend = senderPrefix + " MODE " + channel.getName() + \
+					" +" + successfulChanges + "\r\n"; 
+				this->sendToChannel(toSend, channel);
+			}
+		}
+		else if (mode[0] == '-') {
+			channel.removeChannelModes(args);
+			// send to channels users?
+		}
 	}
 };
 
@@ -522,6 +564,8 @@ void Server::privmsg(Message & message, Client &client) {
 		this->sendToClient(client.getFd(), errNoTextToSend(SERVER_NAME, client.getNickname()));
 		return;
 	}
+
+	// check if user is sending a message to another client or to a channel
 	try {
 		if (args[1][0] == '#') {
 			broadcastMessageToChannel(args, message, client);
@@ -550,12 +594,13 @@ void Server::sendMessageToClient(std::vector<std::string> & args, Message & mess
 	message.setReceiverClient();
 	Client & receiver = message.getReceiverClient();
 
+	// build a message
 	std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
 	std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
 		+ "@" + client.getHostname();
-	// do we need to handle other hostnames?
     std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
 	
+	// send a message
 	int sendResult = this->sendToClient(receiver.getFd(), privmsg);
     if (sendResult == -1) {
         std::cerr << "Failed to send message to fd: " << receiver.getFd() << ", errno: " << errno << std::endl;
@@ -594,7 +639,6 @@ void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message 
 		if (*itr != &client) {
 			std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
 			+ "@" + client.getHostname();
-			// do we need to handle other hostnames?
     		std::string privmsg = senderPrefix + " PRIVMSG " + targetChannel.getName() + " :" + messageText + "\r\n";
 
 			int sendResult = this->sendToClient((**itr).getFd(), privmsg);
@@ -746,3 +790,30 @@ std::string	Server::getIP(int fd)
 		return ("unknown");
 	return (std::string(ipStr));
 }
+
+void Server::sendToChannel(const std::string &message, Channel &channel) {
+    for (const auto &member : channel.getUsers()) {
+        if (member) {
+            auto it = std::find_if(_clients.begin(), _clients.end(),
+                                   [&member](const auto &pair) {
+                                       return pair.second.getNickname() == member->getNickname();
+                                   });
+            if (it != _clients.end()) {
+                sendToClient(it->first, message);
+            }
+        }
+    }
+}
+
+/* void Server::removeClient(int fd) {
+    auto it = _clients.find(fd);
+    if (it != _clients.end()) {
+        Client* clientPtr = &it->second;
+        for (auto& [name, channel] : _channels) {
+            channel.removeUser(clientPtr);
+            channel.removeOperator(clientPtr);
+        }
+        _clients.erase(it);
+    }
+} */
+// When a client disconnects, remove their Client* from all _users and _operators sets:

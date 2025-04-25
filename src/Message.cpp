@@ -85,10 +85,6 @@ void	Message::setReceiverClient(void)
 void	Message::setReceiverChannel(std::map<std::string, Channel>	& _channels) {
 	std::pair<std::string, Channel> found_pair;
 	bool found = false;
-	
-	for (auto& pair : _channels) {
-		std::cout << "Channel name: "<< pair.first << std::endl;
-	}
 
 	for (auto& pair : _channels) {
 		if (pair.first == _buffer_divided[1]) {

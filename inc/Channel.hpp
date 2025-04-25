@@ -2,10 +2,15 @@
 
 #include <iostream>
 #include <vector>
-#include <Client.hpp>
+#include "Client.hpp"
+#include "server_replies.hpp"
 
 #include <string>
 #include <set>
+#include <map>
+#include <sys/socket.h> // send()
+
+#define SERVER_NAME "ircserv"
 
 class Channel {
 	public:
@@ -19,17 +24,31 @@ class Channel {
 		const std::string			&getName() const;
 		void						addUser(Client *client);
 		void						removeUser(Client *client);
+		void						removeOperator(Client* client);
 		bool						isUser(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
+		const std::string			getChannelModes() const;
 
+		std::string addChannelModes(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client);
+		int addOperatorToChannel(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
+		int addKeyToChannel(std::vector<std::string> &args, Client &client, \
+			size_t &paramCount);
+		int addLimitToChannel(std::vector<std::string> &args, Client &client, \
+			size_t &paramCount);
+		void removeChannelModes(std::vector<std::string> &args);
+		void addITMode(const char & mode, std::string & successfulChangesMode);
+		int	channelSendToClient(int fd, const std::string &msg);
 		
 		private:
-			/* std::vector<Client*>		_operator;
-			std::vector<Client*>		_users;
-			std::vector<Client*>		_invite;
-			std::vector<Client*>		_voice;
-			size_t						_user_limit;
-			std::string					_password; */
+			/*std::set<Client*>			_invite;
+			std::set<Client*>			_voice; */
 			std::string					_name;
 			std::set<Client *>			_users;
+			std::string					_channelModes;
+			std::string					_channelParams;
+			std::set<Client*>			_operators;
+			size_t						_user_limit;
+			std::string					_password;
 };
