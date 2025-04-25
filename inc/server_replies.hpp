@@ -207,3 +207,10 @@ inline std::string errKeySet(const std::string& server, \
 	return ":" + server + " 467 " + nick + " " + channel + \
 		" :Channel key already set\r\n";
 }
+
+// 482    ERR_CHANOPRIVSNEEDED
+inline std::string errChanOPrivNeeded(const std::string& server, \
+	const std::string& nick, const std::string& channel) {
+		return ":" + server + " 482 " + nick + " " + \
+			channel + " :You're not channel operator\r\n";
+}

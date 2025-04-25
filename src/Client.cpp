@@ -154,3 +154,7 @@ const	std::set<std::string>	&Client::getChannels() const
 {
 	return (this->_channels);
 }
+
+void Client::setOperator(bool op) { _isOperator = op; }
+
+bool Client::isOperator() const { return _isOperator; }

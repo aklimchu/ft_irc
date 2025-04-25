@@ -24,9 +24,10 @@ class Channel {
 		const std::string			&getName() const;
 		void						addUser(Client *client);
 		void						removeUser(Client *client);
+		void						removeOperator(Client* client);
 		bool						isUser(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
-		const std::string			&getChannelModes() const;
+		const std::string			getChannelModes() const;
 
 		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);

@@ -39,7 +39,7 @@ const	std::set<Client *>	&Channel::getUsers() const
 	return (_users);
 }
 
-const	std::string	& Channel::getChannelModes() const {
+const	std::string Channel::getChannelModes() const {
 	if (_channelParams.length())
 		return _channelModes + " " + _channelParams;
 	else
@@ -49,22 +49,29 @@ const	std::string	& Channel::getChannelModes() const {
 std::string	Channel::addChannelModes(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client) {
 	
-	//checking the privileges?
 	// ERR_CHANOPRIVSNEEDED
+	/* if (_operators.find(&client) == _operators.end()) {
+    	channelSendToClient(client.getFd(), errChanOPrivNeeded(SERVER_NAME, \
+			client.getNickname(), getName()));
+    	return "";
+	} */
 	
 	size_t paramLimit = args.size() - 3;
 	if (paramLimit > 3) 
 		paramLimit = 3; // max 3 modes with optional parameters accepted
-	std::string	&mode = args[2];
+	std::string	mode = args[2];
 	size_t paramCount = 0;
 	std::string successfulChangesMode = "";
 	std::string successfulChangesParam = "";
 
 	// go symbol by symbol to add modes to the channel
-	for (size_t i = 1; i < mode.size(); i++)
-	{
-		//if mode[i] != ........
-		//ERR_UNKNOWNMODE
+	for (size_t i = 1; i < mode.length(); i++) {
+		if (mode[i] != 'i' && mode[i] != 't' && mode[i] != 'k' && \
+			mode[i] != 'l' && mode[i] != 'o') {
+    		channelSendToClient(client.getFd(), \
+       			errUnknownMode(SERVER_NAME, client.getNickname(), mode[i], this->getName()));
+			continue;
+		}
 
 		// i, t
 		if (mode[i] == 'i' || mode[i] == 't') {
@@ -122,7 +129,7 @@ std::string	Channel::addChannelModes(std::vector<std::string> &args, \
 }
 
 void Channel:: addITMode(const char & mode, std::string & successfulChangesMode) {
-	if (!_channelModes.find(mode)) {
+	if (_channelModes.find(mode) == std::string::npos) {
 		_channelModes += mode;
 	}
 	successfulChangesMode += mode;
@@ -147,9 +154,10 @@ int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	// check if user exists in the channel and update privileges
 	found = false;
 	for (const auto& result : _users) {
-		if (result->getNickname() == args[3 + paramCount - 1]) {
+		if (result && result->getNickname() == args[3 + paramCount - 1]) {
 			Client & client = *result;
-			_operators.insert(&client); // should we also set privileges to client?
+			client.setOperator(true);
+			_operators.insert(&client);
 			found = true;
 			break;
 		}
@@ -159,6 +167,10 @@ int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 			errUserNotInChannel(SERVER_NAME, client.getNickname(), \
 			args[3 + paramCount - 1], this->getName()));
 		return -1;
+	}
+
+	if (_channelModes.find('o') == std::string::npos) {
+		_channelModes += 'o';
 	}
 	return 0;
 }
@@ -200,7 +212,9 @@ int Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, \
 	}
 
 	// adding new user limit
-	_channelModes += 'l';
+	if (_channelModes.find('l') == std::string::npos) {
+		_channelModes += 'l';
+	}
 	
 	_user_limit = new_limit;
 
@@ -220,4 +234,8 @@ int	Channel::channelSendToClient(int fd, const std::string &msg)
 	int bytesSent = send(fd, msg.c_str(), msg.length(), 0);
 	//std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
 	return bytesSent; // returning the number of bytes sent - for easier debugging
+}
+
+void Channel::removeOperator(Client* client) {
+    _operators.erase(client);
 }
