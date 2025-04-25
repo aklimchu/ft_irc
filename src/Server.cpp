@@ -89,7 +89,10 @@ void	Server::handleOldClient(size_t &i)
 	ssize_t	bytes_read = recv(this->_pollFds[i].fd, buffer, sizeof(buffer) - 1, 0);
 	if (bytes_read <= 0) // Disconnet/Error
 	{
-		std::cout << "Client disconnected/Error happened" << std::endl;
+		if (bytes_read == 0)
+			std::cout << "Client disconnected" << std::endl;
+		else if (bytes_read < 0)
+			std::cerr << "Error: recv()" << std::endl;
 		// Client didnt send quit, have to call quit manually
 		if (this->_clients.find(fd) != _clients.end() && !client.getHasQuit())
 		{
