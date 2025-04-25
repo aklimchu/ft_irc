@@ -480,10 +480,11 @@ void Server::mode(Message & message, Client &client) {
 		std::string	&mode = args[2];
 		if (mode[0] == '+') {
 			std::string successfulChanges = channel.addChannelModes(args, _clients, client);
-			if (successfulChanges.length()) {
+			if (!successfulChanges.empty()) {
 				std::string senderPrefix = ":" + client.getNickname() + "!" + \
 					client.getUsername() + "@" + client.getHostname();
-				std::string toSend = senderPrefix + " MODE +" + successfulChanges; 
+				std::string toSend = senderPrefix + " MODE " + channel.getName() + \
+					" +" + successfulChanges + "\r\n"; 
 				this->sendToChannel(toSend, channel);
 			}
 		}
@@ -548,7 +549,6 @@ void Server::sendMessageToClient(std::vector<std::string> & args, Message & mess
 	std::cout << "Receiver of PRIVMSG " + receiver.getNickname() << std::endl;
 	std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
 		+ "@" + client.getHostname();
-	// do we need to handle other hostnames?
     std::string privmsg = senderPrefix + " PRIVMSG " + receiver.getNickname() + " :" + messageText + "\r\n";
 	
 	// send a message
@@ -590,7 +590,6 @@ void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message 
 		if (*itr != &client) {
 			std::string senderPrefix = ":" + client.getNickname() + "!" + client.getUsername() \
 			+ "@" + client.getHostname();
-			// do we need to handle other hostnames?
     		std::string privmsg = senderPrefix + " PRIVMSG " + targetChannel.getName() + " :" + messageText + "\r\n";
 
 			int sendResult = this->sendToClient((**itr).getFd(), privmsg);
@@ -743,12 +742,16 @@ std::string	Server::getIP(int fd)
 	return (std::string(ipStr));
 }
 
-void Server::sendToChannel(const std::string &message, Channel & channel) {
-    for (const auto &memberNick : channel.getUsers()) {
-        auto it = std::find_if(_clients.begin(), _clients.end(),
-                               [&memberNick](const auto &pair) { return pair.second.getNickname() == memberNick; });
-        if (it != _clients.end()) {
-            sendToClient(it->first, message); // it->first is the client's fd
+void Server::sendToChannel(const std::string &message, Channel &channel) {
+    for (const auto &member : channel.getUsers()) {
+        if (member) {
+            auto it = std::find_if(_clients.begin(), _clients.end(),
+                                   [&member](const auto &pair) {
+                                       return pair.second.getNickname() == member->getNickname();
+                                   });
+            if (it != _clients.end()) {
+                sendToClient(it->first, message);
+            }
         }
     }
 }

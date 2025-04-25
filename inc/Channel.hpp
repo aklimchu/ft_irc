@@ -2,12 +2,13 @@
 
 #include <iostream>
 #include <vector>
-#include <Client.hpp>
-#include <server_replies.hpp>
+#include "Client.hpp"
+#include "server_replies.hpp"
 
 #include <string>
 #include <set>
 #include <map>
+#include <sys/socket.h> // send()
 
 #define SERVER_NAME "ircserv"
 
@@ -25,7 +26,7 @@ class Channel {
 		void						removeUser(Client *client);
 		bool						isUser(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
-		const std::string			getChannelModes() const;
+		const std::string			&getChannelModes() const;
 
 		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);
@@ -37,6 +38,7 @@ class Channel {
 			size_t &paramCount);
 		void removeChannelModes(std::vector<std::string> &args);
 		void addITMode(const char & mode, std::string & successfulChangesMode);
+		int	channelSendToClient(int fd, const std::string &msg);
 		
 		private:
 			/*std::set<Client*>			_invite;
