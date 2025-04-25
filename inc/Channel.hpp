@@ -27,15 +27,16 @@ class Channel {
 		const std::set<Client *>	&getUsers() const;
 		const std::string			getChannelModes() const;
 
-		void addChannelModes(std::vector<std::string> &args, \
+		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);
-		void addOperatorToChannel(std::vector<std::string> &args, \
+		int addOperatorToChannel(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
-		void addKeyToChannel(std::vector<std::string> &args, Client &client, \
+		int addKeyToChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
-		void addLimitToChannel(std::vector<std::string> &args, Client &client, \
+		int addLimitToChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
-		void						removeChannelModes(std::vector<std::string> &args);
+		void removeChannelModes(std::vector<std::string> &args);
+		void addITMode(const char & mode, std::string & successfulChangesMode);
 		
 		private:
 			/*std::set<Client*>			_invite;

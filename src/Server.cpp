@@ -413,7 +413,7 @@ void Server::mode(Message & message, Client &client) {
 
     //        ✓ERR_NEEDMOREPARAMS              ✓ERR_USERSDONTMATCH
     //        ✓ERR_UMODEUNKNOWNFLAG            ✓RPL_UMODEIS
-		// 	  ERR_KEYSET
+		// 	  ✓ERR_KEYSET
         //    ERR_NOCHANMODES                 ERR_CHANOPRIVSNEEDED
         //    ✓ERR_USERNOTINCHANNEL            ✓ERR_UNKNOWNMODE
         //    ✓RPL_CHANNELMODEIS
@@ -478,14 +478,19 @@ void Server::mode(Message & message, Client &client) {
 		}
 		// Add/remove mode(s)
 		std::string	&mode = args[2];
-		/* for (size_t i = 1; i < mode.size(); i++)
-		{ */
-			if (mode[0] == '+')
-				channel.addChannelModes(args, _clients, client);
-			else if (mode[0] == '-')
-				channel.removeChannelModes(args);
-		/* } */
-		//sendToClient(fd, rplUModeIs(SERVER_NAME, nick, "+" + client.getUsermodes()));
+		if (mode[0] == '+') {
+			std::string successfulChanges = channel.addChannelModes(args, _clients, client);
+			if (successfulChanges.length()) {
+				std::string senderPrefix = ":" + client.getNickname() + "!" + \
+					client.getUsername() + "@" + client.getHostname();
+				std::string toSend = senderPrefix + " MODE +" + successfulChanges; 
+				this->sendToChannel(toSend, channel);
+			}
+		}
+		else if (mode[0] == '-') {
+			channel.removeChannelModes(args);
+			// send to channels users?
+		}
 	}
 };
 
@@ -736,4 +741,14 @@ std::string	Server::getIP(int fd)
 	if (!inet_ntop(AF_INET, &addr.sin_addr, ipStr, sizeof(ipStr)))
 		return ("unknown");
 	return (std::string(ipStr));
+}
+
+void Server::sendToChannel(const std::string &message, Channel & channel) {
+    for (const auto &memberNick : channel.getUsers()) {
+        auto it = std::find_if(_clients.begin(), _clients.end(),
+                               [&memberNick](const auto &pair) { return pair.second.getNickname() == memberNick; });
+        if (it != _clients.end()) {
+            sendToClient(it->first, message); // it->first is the client's fd
+        }
+    }
 }

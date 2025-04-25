@@ -7,6 +7,7 @@
 #include <netinet/in.h> // for sockaddr_in, htons
 #include <unistd.h> // for close
 #include <signal.h>
+#include <algorithm> // for std::find_if
 
 #include <vector>
 #include <fcntl.h>
@@ -44,6 +45,7 @@ class Server {
 		void	handleNewClient();
 		void	handleOldClient(size_t &i);
 		int		sendToClient(int fd, const std::string &msg);
+		void	sendToChannel(const std::string &message, Channel & channel);
 		void	welcomeMessages(Client &client);
 		const std::map<int, Client> &getClients(void) const; // Added to return const reference
 		bool	sharedChannel(const Client &a, const Client &b) const;

@@ -45,7 +45,7 @@ const	std::string	Channel::getChannelModes() const {
 		return _channelModes;
 }
 
-void	Channel::addChannelModes(std::vector<std::string> &args, \
+std::string	Channel::addChannelModes(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client) {
 	
 	//checking the privileges?
@@ -56,6 +56,8 @@ void	Channel::addChannelModes(std::vector<std::string> &args, \
 		paramLimit = 3; // max 3 modes with optional parameters accepted
 	std::string	&mode = args[2];
 	size_t paramCount = 0;
+	std::string successfulChangesMode = "";
+	std::string successfulChangesParam = "";
 
 	// go symbol by symbol to add modes to the channel
 	for (size_t i = 1; i < mode.size(); i++)
@@ -65,14 +67,14 @@ void	Channel::addChannelModes(std::vector<std::string> &args, \
 
 		// i, t
 		if (mode[i] == 'i' || mode[i] == 't') {
-			_channelModes += mode[i];
+			addITMode(mode[i], successfulChangesMode);
 			continue;
 		}
 
 		// check if enough parameters
 		if (args.size() < 3 + paramCount + 1) {
 			errNeedMoreParams(SERVER_NAME, client.getNickname(), "MODE");
-			return;
+			return("");
 		}
 
 		// moving to next parameter
@@ -82,19 +84,32 @@ void	Channel::addChannelModes(std::vector<std::string> &args, \
 		paramCount++;
 
 		// k, l, o
-		if (mode[i] == 'k') {
-			addKeyToChannel(args, client, paramCount);
+		if (mode[i] == 'k' && addKeyToChannel(args, client, paramCount) == 0) {
+			successfulChangesMode += 'k';
+			successfulChangesParam += args[3 + paramCount - 1];
 		}
-		else if (mode[i] == 'l') {
-			addLimitToChannel(args, client, paramCount);
+		else if (mode[i] == 'l' && addLimitToChannel(args, client, paramCount) == 0) {
+			successfulChangesMode += 'l';
+			successfulChangesParam += args[3 + paramCount - 1];
 		}
-		else if (mode[i] == 'o') {
-			addOperatorToChannel(args, serverUsers, client, paramCount);
+		else if (mode[i] == 'o' && \
+			addOperatorToChannel(args, serverUsers, client, paramCount) == 0) {
+			successfulChangesMode += 'o';
+			successfulChangesParam += args[3 + paramCount - 1];
 		}
+		std::string successfulChanges = successfulChangesMode + successfulChangesParam;
+		return(successfulChanges);
 	}
 }
 
-void	Channel::addOperatorToChannel(std::vector<std::string> &args, \
+void Channel:: addITMode(const char & mode, std::string & successfulChangesMode) {
+	if (!_channelModes.find(mode)) {
+		_channelModes += mode;
+	}
+	successfulChangesMode += mode;
+}
+
+int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client, size_t &paramCount) {
 	// check if user exists on the server
 	bool found = false;
@@ -106,7 +121,7 @@ void	Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	}
 	if (!found) {
 		errNoSuchNick(SERVER_NAME, client.getNickname(), args[3 + paramCount - 1]);
-		return;
+		return -1;
    	}
 
 	// check if user exists in the channel and update privileges
@@ -122,18 +137,20 @@ void	Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	if (!found) {
 		errUserNotInChannel(SERVER_NAME, client.getNickname(), \
 			args[3 + paramCount - 1], this->getName());
-		return;
+		return -1;
 	}
+	return 0;
 }
 
-void Channel::addKeyToChannel(std::vector<std::string> &args, Client &client, \
+int Channel::addKeyToChannel(std::vector<std::string> &args, Client &client, \
 	size_t &paramCount) {
 	// check if password is already set
 	if (_channelModes.find('k')) {
 		errKeySet(SERVER_NAME, client.getNickname(), this->getName());
-		return;
+		return -1;
 	}
 
+	// adding new password
 	_channelModes += 'k';
 	
 	_password = args[3 + paramCount - 1];
@@ -142,18 +159,19 @@ void Channel::addKeyToChannel(std::vector<std::string> &args, Client &client, \
 		_channelParams += " ";
 	}
 	_channelParams += args[3 + paramCount - 1];
+	return 0;
 }
 
-void Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, \
+int Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, \
 	size_t &paramCount) {
 	//check if limit is positive integer
 	int new_limit = std::stoi(args[3 + paramCount - 1]);
 	if (new_limit <= 0) {
-		//ERR_UNKNOWNMODE // is it specific enough?
 		errUnknownMode(SERVER_NAME, client.getNickname(), 'l', this->getName());
-		return;
+		return -1;
 	}
 
+	// adding new user limit
 	_channelModes += 'l';
 	
 	_user_limit = new_limit;
@@ -162,8 +180,9 @@ void Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, 
 		_channelParams += " ";
 	}
 	_channelParams += args[3 + paramCount - 1];
+	return 0;
 }
 
-void	Channel::removeChannelModes(std::vector<std::string> &args) {
+void Channel::removeChannelModes(std::vector<std::string> &args) {
 	(void)args;
 }
