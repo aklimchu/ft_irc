@@ -43,6 +43,12 @@ inline std::string	rplWhoisServer(const std::string &server, const std::string &
 	return (":" + server + " 312 " + requester + " " + nick + " " + server + " :ft_irc server\r\n");
 }
 
+// 315 RPL_ENDOFWHO
+inline std::string	rplEndOfWho(const std::string &server, const std::string &requester, const std::string &channelName)
+{
+	return (":" + server + " 315 " + requester + " " + channelName + " :End of /WHO list\r\n");
+}
+
 // 318 RPL_ENDOFWHOIS
 inline std::string	rplEndOfWhois(const std::string &server, const std::string &requester,
 	const std::string &nick)
@@ -55,6 +61,15 @@ inline std::string	rplWhoisChannels(const std::string &server, const std::string
 	const std::string &nick, const std::string &channels)
 {
 	return (":" + server + " 319 " + requester + " " + nick + " :" + channels + "\r\n");
+}
+
+// 352 RPL_WHOREPLY
+inline std::string	rplWhoReply(const std::string &server, const std::string &requester,
+	const std::string &channelName, const std::string &username, const std::string &hostname,
+	const std::string &serverName, const std::string &nick, const std::string &flags, const std::string &hopcountAndRealname)
+{
+	return (":" + server + " 352 " + requester + " " + channelName + " " + username + " " + hostname
+		+ " " + serverName + " " + nick + " " + flags + " :" + hopcountAndRealname + "\r\n");
 }
 
 // 353 RPL_NAMREPLY
@@ -192,6 +207,13 @@ inline std::string errUserNotInChannel(const std::string& server, \
 	const std::string& nick, const std::string& target, const std::string& channel) {
 		return ":" + server + " 441 " + nick + " " + target + " " + \
 			channel + " :They aren't on that channel\r\n";
+}
+
+// 442 ERR_NOTONCHANNEL
+inline std::string	errNotOnChannel(const std::string &server, const std::string &nick,
+	const std::string &channel)
+{
+	return (":" + server + " 442 " + nick + " " + channel + " :You're not on that channel\r\n");
 }
 
 //472    ERR_UNKNOWNMODE

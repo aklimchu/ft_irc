@@ -113,10 +113,14 @@ void	Server::handleOldClient(size_t &i)
 		std::string	&buf = client.getBuffer();
 		size_t		pos;
 
-		while((pos = buf.find("\r\n")) != std::string::npos)
+		// Added the 2cnd condition into the loop, to work with netcat, which only adds the '\n'
+		while((pos = buf.find("\r\n")) != std::string::npos || (pos = buf.find("\n")) != std::string::npos)
 		{
 			std::string	line = buf.substr(0, pos);
-			buf.erase(0, pos + 2);
+			if (buf[pos] == '\r')
+				buf.erase(0, pos + 2);
+			else
+				buf.erase(0, pos + 1); // Added to work with netcat
 
 			std::cout << "Parsed line: " << line << std::endl;
 
@@ -342,39 +346,46 @@ void Server::join(Message & message, Client &client) {
 
 	int							fd = client.getFd();
 	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
 
-	if (message.getBufferDivided().size() < 2)
+	if (args.size() < 2)
 	{
 		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "JOIN"));
 		return ;
 	}
-	std::string	channelName = message.getBufferDivided()[1];
 
-	// If it doesnt exist, create it (the first member should be set as operator?)
-	if (this->_channels.find(channelName) == this->_channels.end())
+	std::vector<std::string>	channels = message.ft_split(args[1], ',');
+
+	for (size_t i = 0; i < channels.size(); i++)
 	{
-		this->_channels[channelName] = Channel(channelName);
-	}
-	this->_channels[channelName].addUser(&client);
-	client.joinChannel(channelName);
+		// If it doesnt exist, create it (the first member should be set as operator?)
+		if (this->_channels.find(channels[i]) == this->_channels.end())
+		{
+			this->_channels[channels[i]] = Channel(channels[i]);
+		}
+		if (this->_channels[channels[i]].isUser(&client)) // For joining a channel, where already a member
+			continue;
+		this->_channels[channels[i]].addUser(&client);
+		client.joinChannel(channels[i]);
 	
-	// JOIN message to all channel members
-	std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
-		+ " JOIN :" + channelName + "\r\n";
-	const std::set<Client *>	&users = this->_channels[channelName].getUsers();
+		// JOIN message to all channel members
+		std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
+			+ " JOIN :" + channels[i] + "\r\n";
+		const std::set<Client *>	&users = this->_channels[channels[i]].getUsers();
 
-	for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
-		sendToClient((*it)->getFd(), str);
+		for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
+			sendToClient((*it)->getFd(), str);
 
-	// Handle sending 353 RPL_NAMREPLY and 366 RPL_ENDOFNAMES
-	// Add "@" prefix to operator names?
-	std::string	names;
-	for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
-		names += (*it)->getNickname() + " ";
-	if (!names.empty())
-		names.pop_back();
-	sendToClient(fd, rplNamReply(SERVER_NAME, nick, channelName, names));
-	sendToClient(fd, rplEndOfNames(SERVER_NAME, nick, channelName));
+		// Handle sending 353 RPL_NAMREPLY and 366 RPL_ENDOFNAMES
+		// Add "@" prefix to operator names?
+		std::string	names;
+		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
+			names += (*it)->getNickname() + " ";
+		if (!names.empty())
+			names.pop_back();
+		sendToClient(fd, rplNamReply(SERVER_NAME, nick, channels[i], names));
+		sendToClient(fd, rplEndOfNames(SERVER_NAME, nick, channels[i]));
+	}
 };
 
 void Server::part(Message & message, Client &client) {
@@ -383,7 +394,67 @@ void Server::part(Message & message, Client &client) {
     //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
     //        ERR_NOTONCHANNEL
 	std::cout << "PART command by " << message.getSender() << std::endl;
-	(void)client;
+
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+	std::string					partMsg = "";
+
+	if (args.size() < 2)
+	{
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "PART"));
+		return ;
+	}
+
+	std::vector<std::string>	channels = message.ft_split(args[1], ',');
+
+	if (args.size() > 2) // Build the part msg, if it was included
+	{
+		partMsg = args[2];
+		if (partMsg[0] == ':')
+			partMsg = partMsg.substr(1);
+		for (size_t i = 3; i < args.size(); i++)
+			partMsg += " " + args[i];
+	}
+	// Loop through each channel given as argument
+	for(size_t i = 0; i < channels.size(); i++)
+	{
+		std::string	&channelName = channels[i];
+
+		//if (channelName[0] != '#') // NOT necessary?!?!
+			//channelName = '#' + channelName;
+		// Check if the channel exists
+		if (this->_channels.find(channelName) == this->_channels.end())
+		{
+			sendToClient(fd, errNoSuchChannel(SERVER_NAME, nick, channelName));
+			continue;
+		}
+
+		Channel	&channel = this->_channels[channelName];
+
+		// Check if the client is on that channel
+		if (!channel.isUser(&client))
+		{
+			sendToClient(fd, errNotOnChannel(SERVER_NAME, nick, channelName));
+			continue;
+		}
+
+		std::string					fullMsg = ":" + nick + "!"+ client.getUsername() + "@"
+			+ client.getHostname() + " PART " + channelName;// + " :" + partMsg + "\r\n";
+		if (!partMsg.empty())
+			fullMsg += " :" + partMsg;
+		fullMsg += "\r\n";
+		const std::set<Client *>	&users = channel.getUsers();
+
+		// Send the full part msg to all the clients on that channel
+		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
+			sendToClient((*it)->getFd(), fullMsg);
+
+		channel.removeUser(&client); // Remove the client from the channel
+		client.leaveChannel(channelName); // Remove the channel from the clients list of channels
+		if (channel.getUsers().empty()) // If channel is left empty, remove it
+			this->_channels.erase(channelName);
+	}
 };
 
 void Server::topic(Message & message, Client &client) {
@@ -734,6 +805,46 @@ void	Server::whois(Message &message, Client &client)
 	if (!channels.empty())
 		sendToClient(fd, rplWhoisChannels(SERVER_NAME, nick, targetNick, channels));
 	sendToClient(fd, rplEndOfWhois(SERVER_NAME, nick, targetNick));
+}
+
+void	Server::who(Message &message, Client &client)
+{
+	std::cout << "WHO command by " << message.getSender() << std::endl;
+
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() < 2)
+	{
+		sendToClient(fd, rplEndOfWho(SERVER_NAME, nick, "*"));
+		return ;
+	}
+
+	std::string	channelName = args[1];
+
+	// Check if channel exists
+	if (this->_channels.find(channelName) == this->_channels.end())
+	{
+		sendToClient(fd, rplEndOfWho(SERVER_NAME, nick, channelName));
+		return ;
+	}
+
+	Channel						&channel = this->_channels[channelName];
+	const std::set<Client *>	&users = channel.getUsers();
+
+	// Loop through every client on that channel and send the rplWhoReply to the requester
+	for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
+	{
+		Client		*user = *it;
+		std::string	flags = "H"; // Placeholder? (H is "Here", G is "Gone"). Add "@" to mark operator status?
+		std::string	hopcountAndRealname = "0 " + user->getRealname();
+
+		sendToClient(fd, rplWhoReply(SERVER_NAME, nick, channelName, user->getUsername(),
+			user->getHostname(), SERVER_NAME, user->getNickname(), flags, hopcountAndRealname));
+	}
+	// Marks the end
+	sendToClient(fd, rplEndOfWho(SERVER_NAME, nick, channelName));
 }
 
 int	Server::sendToClient(int fd, const std::string &msg)

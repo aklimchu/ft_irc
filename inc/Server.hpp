@@ -67,6 +67,7 @@ class Server {
 		void	ping(Message &message, Client &client);
 		void	cap(Message &message, Client &client);
 		void	whois(Message &message, Client &client);
+		void	who(Message &message, Client &client);
 		//do we need oper function?
 
 		class SocketError : public std::exception {
@@ -120,6 +121,7 @@ class Server {
 			{"PRIVMSG", &Server::privmsg},
 			{"PING", &Server::ping},
 			{"CAP", &Server::cap},
-			{"WHOIS", &Server::whois}
+			{"WHOIS", &Server::whois},
+			{"WHO", &Server::who}
 		};
 };
