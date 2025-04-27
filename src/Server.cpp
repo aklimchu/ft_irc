@@ -167,6 +167,7 @@ void Server::startServer(void)
 			}
 		}
 	}
+	this->closeFds();
 }
 
 void	Server::executeCommand(const std::string &buffer, Client &client)
@@ -306,7 +307,7 @@ void Server::user(Message & message, Client &client) {
 		sendToClient(fd, errAlreadyRegistered(SERVER_NAME, nick));
 		return ;
 	}
-	if (args.size() < 2)
+	if (args.size() < 5)
 	{
 		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "USER"));
 		return ;
