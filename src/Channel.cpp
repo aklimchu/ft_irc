@@ -3,9 +3,9 @@
 //--------------------------------Constructors--------------------------------//
 
 Channel::Channel(): _channelModes(""), _channelParams(""), _user_limit(0), \
-	_password("") {}
+	_password("") , _topic(""){}
 Channel::Channel(const std::string &name) : _name(name), _channelModes(""), \
-	_channelParams(""), _user_limit(0), _password("")
+	_channelParams(""), _user_limit(0), _password(""), _topic("")
 {
 }
 
@@ -34,6 +34,14 @@ bool	Channel::isUser(Client *client) const
 		return (false);
 }
 
+bool	Channel::isOperator(Client *client) const
+{
+	if (this->_operators.find(client) != this->_operators.end())
+		return (true);
+	else
+		return (false);
+}
+
 const	std::set<Client *>	&Channel::getUsers() const
 {
 	return (_users);
@@ -44,6 +52,21 @@ const	std::string Channel::getChannelModes() const {
 		return _channelModes + " " + _channelParams;
 	else
 		return _channelModes;
+}
+
+const std::string	&Channel::getTopic(void) const
+{
+	return (this->_topic);
+}
+
+void	Channel::setTopic(const std::string &str)
+{
+	this->_topic = str;
+}
+
+void	Channel::setAsOperator(Client *client)
+{
+	this->_operators.insert(client);
 }
 
 std::string	Channel::addChannelModes(std::vector<std::string> &args, \

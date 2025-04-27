@@ -368,6 +368,10 @@ void Server::join(Message & message, Client &client) {
 			continue;
 		this->_channels[channels[i]].addUser(&client);
 		client.joinChannel(channels[i]);
+		// If the client was the first channel member(creator), add it as an op
+		if (this->_channels[channels[i]].getUsers().size() == 1) 
+			this->_channels[channels[i]].setAsOperator(&client);
+
 	
 		// JOIN message to all channel members
 		std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
@@ -381,7 +385,11 @@ void Server::join(Message & message, Client &client) {
 		// Add "@" prefix to operator names?
 		std::string	names;
 		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
+		{
+			if (this->_channels[channels[i]].isOperator(*it))
+				names += '@';
 			names += (*it)->getNickname() + " ";
+		}
 		if (!names.empty())
 			names.pop_back();
 		sendToClient(fd, rplNamReply(SERVER_NAME, nick, channels[i], names));
@@ -413,7 +421,7 @@ void Server::part(Message & message, Client &client) {
 	{
 		partMsg = args[2];
 		if (partMsg[0] == ':')
-			partMsg = partMsg.substr(1);
+			partMsg.erase(0, 1);
 		for (size_t i = 3; i < args.size(); i++)
 			partMsg += " " + args[i];
 	}
@@ -465,7 +473,72 @@ void Server::topic(Message & message, Client &client) {
 	// RPL_NOTOPIC                     RPL_TOPIC
 	// ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
 	std::cout << "TOPIC command by " << message.getSender() << std::endl;
-	(void)client;
+
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() < 2)
+	{
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "TOPIC"));
+		return ;
+	}
+
+	std::string	channelName = args[1];
+	std::map<std::string, Channel>::iterator it = this->_channels.find(channelName);
+	
+	// Check if the channel exists
+	if (it == this->_channels.end())
+	{
+		sendToClient(fd, errNoSuchChannel(SERVER_NAME, nick, channelName));
+		return ;
+	}
+
+	Channel	&channel = it->second;
+
+	// Check if the client is a member of the channel
+	if (!channel.isUser(&client))
+	{
+		sendToClient(fd, errNotOnChannel(SERVER_NAME, nick, channelName));
+		return ;
+	}
+
+	// Just show the current topic, if no args given after channel name
+	if (args.size() == 2)
+	{
+		if (channel.getTopic().empty())
+			sendToClient(fd, rplNoTopic(SERVER_NAME, nick, channelName));
+		else
+			sendToClient(fd, rplTopic(SERVER_NAME, nick, channelName, channel.getTopic()));
+		return ;
+	}
+
+	// Check if the client has to be an op to set the topic
+	if (channel.getChannelModes().find('t') != std::string::npos)
+	{
+		if (!channel.isOperator(&client)) // Check if the client is op on the channel
+		{
+			sendToClient(fd, errChanOPrivNeeded(SERVER_NAME, nick, channelName));
+			return ;
+		}
+	}
+
+	// Build and set the new topic
+	std::string	newTopic = args[2];
+
+	if (newTopic[0] == ':')
+		newTopic.erase(0, 1);
+	for (size_t i = 3; i < args.size(); i++)
+		newTopic += " " + args[i];
+	channel.setTopic(newTopic);
+
+	std::string	topicChangeMsg = ":" + nick + "!" + client.getUsername() + "@"
+		+ client.getHostname() + " TOPIC " + channelName + " :" + newTopic + "\r\n";
+	
+	// Send the full topic change message to all the clients in the channel
+	for (std::set<Client *>::const_iterator it = channel.getUsers().begin();
+		it != channel.getUsers().end(); it++)
+		sendToClient((*it)->getFd(), topicChangeMsg);
 };
 
 void Server::invite(Message & message, Client &client) {
@@ -500,7 +573,7 @@ void Server::quit(Message & message, Client &client) {
 	{
 		quitMsg = args[1];
 		if (quitMsg[0] == ':')
-			quitMsg = quitMsg.substr(1);
+			quitMsg.erase(0, 1);
 		for (size_t i = 2; i < args.size(); i++)
 			quitMsg += " " + args[i];
 	}

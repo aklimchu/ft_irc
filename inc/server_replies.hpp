@@ -63,6 +63,19 @@ inline std::string	rplWhoisChannels(const std::string &server, const std::string
 	return (":" + server + " 319 " + requester + " " + nick + " :" + channels + "\r\n");
 }
 
+// 331 RPL_NOTOPIC
+inline std::string	rplNoTopic(const std::string &server, const std::string &nick, const std::string &channel)
+{
+	return (":" + server + " 331 " + nick + " " + channel + " :No topic is set\r\n");
+}
+
+// 332 RPL_TOPIC
+inline std::string	rplTopic(const std::string &server, const std::string &nick,
+	const std::string &channel, const std::string &topic)
+{
+	return (":" + server + " 332 " + nick + " " + channel + " :" + topic + "\r\n");
+}
+
 // 352 RPL_WHOREPLY
 inline std::string	rplWhoReply(const std::string &server, const std::string &requester,
 	const std::string &channelName, const std::string &username, const std::string &hostname,

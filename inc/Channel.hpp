@@ -26,8 +26,12 @@ class Channel {
 		void						removeUser(Client *client);
 		void						removeOperator(Client* client);
 		bool						isUser(Client *client) const;
+		bool						isOperator(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
 		const std::string			getChannelModes() const;
+		const std::string			&getTopic() const;
+		void						setTopic(const std::string &str);
+		void						setAsOperator(Client *client);
 
 		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);
@@ -51,4 +55,5 @@ class Channel {
 			std::set<Client*>			_operators;
 			size_t						_user_limit;
 			std::string					_password;
+			std::string					_topic;
 };
