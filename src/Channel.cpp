@@ -179,8 +179,8 @@ int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	for (const auto& result : _users) {
 		if (result && result->getNickname() == args[3 + paramCount - 1]) {
 			Client & client = *result;
-			client.setOperator(true);
-			_operators.insert(&client);
+			client.setOperator(true); // do we need this?
+			this->setAsOperator(&client);
 			found = true;
 			break;
 		}
