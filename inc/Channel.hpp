@@ -36,15 +36,25 @@ class Channel {
 
 		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);
+		std::string removeChannelModes(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client);
+		void addITMode(const char & mode, std::string & successfulChangesMode);
 		int addOperatorToChannel(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
 		int addKeyToChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
 		int addLimitToChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
-		void removeChannelModes(std::vector<std::string> &args);
-		void addITMode(const char & mode, std::string & successfulChangesMode);
+		void removeITMode(const char & mode, std::string & successfulChangesMode);
+		int removeOperatorFromChannel(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
+		int removeKeyFromChannel(std::vector<std::string> &args, Client &client, \
+			size_t &paramCount);
+		int removeLimitFromChannel(std::vector<std::string> &args, Client &client, \
+			size_t &paramCount);
 		int	channelSendToClient(int fd, const std::string &msg);
+		size_t findParamIndex(char mode);
+		void removeFromChannelParams(size_t paramIndex);
 		
 		private:
 			/*std::set<Client*>			_invite;

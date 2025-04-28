@@ -245,8 +245,134 @@ int Channel::addLimitToChannel(std::vector<std::string> &args, Client &client, \
 	return 0;
 }
 
-void Channel::removeChannelModes(std::vector<std::string> &args) {
-	(void)args;
+std::string Channel::removeChannelModes(std::vector<std::string> &args, \
+	std::map<int, Client> &serverUsers, Client &client) {
+	// check if the user has operator privileges
+	if (_operators.find(&client) == _operators.end()) {
+    	channelSendToClient(client.getFd(), errChanOPrivNeeded(SERVER_NAME, \
+			client.getNickname(), getName()));
+    	return "";
+	}
+	
+	size_t paramLimit = args.size() - 3;
+	if (paramLimit > 3) 
+		paramLimit = 3; // max 3 modes with optional parameters accepted
+	std::string	mode = args[2];
+	size_t paramCount = 0;
+	std::string successfulChangesMode = "";
+	std::string successfulChangesParam = "";
+
+	// go symbol by symbol to add modes to the channel
+	for (size_t i = 1; i < mode.length(); i++) {
+		if (mode[i] != 'i' && mode[i] != 't' && mode[i] != 'k' && \
+			mode[i] != 'l' && mode[i] != 'o') {
+    		channelSendToClient(client.getFd(), \
+       			errUnknownMode(SERVER_NAME, client.getNickname(), mode[i], this->getName()));
+			continue;
+		}
+
+		// i, t
+		if (mode[i] == 'i' || mode[i] == 't') {
+			removeITMode(mode[i], successfulChangesMode);
+			continue;
+		}
+
+		// k, l
+		if (mode[i] == 'k' && removeKeyFromChannel(args, client, paramCount) == 0) {
+			successfulChangesMode += 'k';
+			continue;
+		}
+		if (mode[i] == 'l' && removeLimitFromChannel(args, client, paramCount) == 0) {
+			successfulChangesMode += 'l';
+			continue;
+		}
+
+		// check if enough parameters
+		if (args.size() < 3 + paramCount + 1) {
+			channelSendToClient(client.getFd(), \
+				errNeedMoreParams(SERVER_NAME, client.getNickname(), "MODE"));
+			std::string returnStr = "";
+			return(returnStr);
+		}
+
+		// moving to next parameter
+		if (paramCount == paramLimit) {
+			continue;
+		}
+		paramCount++;
+
+		// o
+		if (mode[i] == 'o' && \
+			removeOperatorFromChannel(args, serverUsers, client, paramCount) == 0) {
+			successfulChangesMode += 'o';
+			if (!successfulChangesParam.empty()) {
+				successfulChangesParam += " ";
+			}
+			successfulChangesParam += args[3 + paramCount - 1];
+		}
+	}
+	if (!successfulChangesMode.empty()) {
+		if (!successfulChangesParam.empty()) {
+			return (successfulChangesMode + " " + successfulChangesParam);
+		}
+		else {
+			return (successfulChangesMode);
+		}
+	}
+	return("");
+}
+
+void Channel::removeITMode(const char & mode, std::string & successfulChangesMode) {
+	auto it = _channelModes.find(mode);
+	if (it != std::string::npos) {
+		_channelModes.erase(it);
+	}
+	successfulChangesMode += mode;
+}
+
+
+int Channel::removeKeyFromChannel(std::vector<std::string> &args, Client &client, \
+	size_t &paramCount) {
+	auto it = _channelModes.find('k');
+	if (it == std::string::npos) {
+		return 0;
+	}
+	else {
+		_channelModes.erase(it);
+	}
+
+	size_t paramIndex = findParamIndex('k');
+	removeFromChannelParams(paramIndex);
+
+	return 0;
+}
+	
+int Channel::removeLimitFromChannel(std::vector<std::string> &args, Client &client, \
+	size_t &paramCount) {
+	auto it = _channelModes.find('l');
+	if (it == std::string::npos) {
+		return 0;
+	}
+	else {
+		_channelModes.erase(it);
+	}
+
+	//erase from Params
+
+	return 0;
+}
+		
+int Channel::removeOperatorFromChannel(std::vector<std::string> &args, \
+	std::map<int, Client> &serverUsers, Client &client, size_t &paramCount) {
+
+}
+
+size_t Channel::findParamIndex(char mode) {
+
+}
+
+void Channel::removeFromChannelParams(size_t paramIndex) {
+
 }
 
 int	Channel::channelSendToClient(int fd, const std::string &msg)
