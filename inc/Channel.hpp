@@ -8,6 +8,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <algorithm> // for find_if
 #include <sys/socket.h> // send()
 
 #define SERVER_NAME "ircserv"

@@ -72,12 +72,12 @@ void	Channel::setAsOperator(Client *client)
 std::string	Channel::addChannelModes(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client) {
 	
-	// ERR_CHANOPRIVSNEEDED
-	/* if (_operators.find(&client) == _operators.end()) {
+	// check if the user has operator privileges
+	if (_operators.find(&client) == _operators.end()) {
     	channelSendToClient(client.getFd(), errChanOPrivNeeded(SERVER_NAME, \
 			client.getNickname(), getName()));
     	return "";
-	} */
+	}
 	
 	size_t paramLimit = args.size() - 3;
 	if (paramLimit > 3) 
@@ -161,21 +161,18 @@ void Channel:: addITMode(const char & mode, std::string & successfulChangesMode)
 int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client, size_t &paramCount) {
 	// check if user exists on the server
-	bool found = false;
-	for (const auto& pair : serverUsers) {
-		if (pair.second.getNickname() == args[3 + paramCount - 1]) {
-			found = true;
-			break;
-		}
-	}
-	if (!found) {
-		channelSendToClient(client.getFd(), \
-			errNoSuchNick(SERVER_NAME, client.getNickname(), args[3 + paramCount - 1]));
-		return -1;
-   	}
+	   auto it = std::find_if(serverUsers.begin(), serverUsers.end(),
+	   [&args, paramCount](const std::pair<const int, Client> &pair) {
+		   return pair.second.getNickname() == args[3 + paramCount - 1];
+	   });
+	if (it == serverUsers.end()) {
+	   channelSendToClient(client.getFd(), \
+		   errNoSuchNick(SERVER_NAME, client.getNickname(), args[3 + paramCount - 1]));
+	   return -1;
+   }
 
 	// check if user exists in the channel and update privileges
-	found = false;
+	bool found = false;
 	for (const auto& result : _users) {
 		if (result && result->getNickname() == args[3 + paramCount - 1]) {
 			Client & client = *result;
