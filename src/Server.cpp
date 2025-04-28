@@ -919,6 +919,8 @@ void	Server::who(Message &message, Client &client)
 		std::string	flags = "H"; // Placeholder? (H is "Here", G is "Gone"). Add "@" to mark operator status?
 		std::string	hopcountAndRealname = "0 " + user->getRealname();
 
+		if (channel.isOperator(user))
+			flags += "@";
 		sendToClient(fd, rplWhoReply(SERVER_NAME, nick, channelName, user->getUsername(),
 			user->getHostname(), SERVER_NAME, user->getNickname(), flags, hopcountAndRealname));
 	}
