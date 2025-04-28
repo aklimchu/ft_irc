@@ -654,39 +654,41 @@ void Server::mode(Message & message, Client &client) {
 	{
 		// find needed channel instance
 		try {
-			message.setReceiverChannel(this->_channels);
+			//message.setReceiverChannel(this->_channels);
+		
+			Channel & channel = message.getReceiverChannel(this->_channels);
+
+			// MODE with no parameters
+			if (args.size() == 2) // Only shows channel modes
+			{
+				sendToClient(fd, rplChannelModeIs(SERVER_NAME, nick, channel.getName(), \
+					"+" + channel.getChannelModes()));
+				return ;
+			}
+			// Add/remove mode(s)
+			std::string	&mode = args[2];
+			if (mode[0] == '+') {
+				std::string successfulChanges = channel.addChannelModes(args, _clients, client);
+				if (!successfulChanges.empty()) {
+					std::string senderPrefix = ":" + client.getNickname() + "!" + \
+						client.getUsername() + "@" + client.getHostname();
+					std::string toSend = senderPrefix + " MODE " + channel.getName() + \
+						" +" + successfulChanges + "\r\n"; 
+					this->sendToChannel(toSend, channel);
+				}
+			}
+			else if (mode[0] == '-') {
+				channel.removeChannelModes(args);
+				// send to channels users?
+			}
 		}
 		catch (Message::NoSuchChannel & e) {
 			sendToClient(client.getFd(), errNoSuchChannel(SERVER_NAME, message.getSender(), \
 				args[1]));
 			return;
 		}
-		Channel & channel = message.getReceiverChannel();
-
-		// MODE with no parameters
-		if (args.size() == 2) // Only shows channel modes
-		{
-			sendToClient(fd, rplChannelModeIs(SERVER_NAME, nick, channel.getName(), \
-				"+" + channel.getChannelModes()));
-			return ;
-		}
-		// Add/remove mode(s)
-		std::string	&mode = args[2];
-		if (mode[0] == '+') {
-			std::string successfulChanges = channel.addChannelModes(args, _clients, client);
-			if (!successfulChanges.empty()) {
-				std::string senderPrefix = ":" + client.getNickname() + "!" + \
-					client.getUsername() + "@" + client.getHostname();
-				std::string toSend = senderPrefix + " MODE " + channel.getName() + \
-					" +" + successfulChanges + "\r\n"; 
-				this->sendToChannel(toSend, channel);
-			}
-		}
-		else if (mode[0] == '-') {
-			channel.removeChannelModes(args);
-			// send to channels users?
-		}
 	}
+	
 };
 
 void Server::privmsg(Message & message, Client &client) {
@@ -736,7 +738,7 @@ void Server::sendMessageToClient(std::vector<std::string> & args, Message & mess
 	}
 
 	// find needed client instance
-	message.setReceiverClient();
+	//message.setReceiverClient();
 	Client & receiver = message.getReceiverClient();
 
 	// build a message
@@ -761,8 +763,8 @@ void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message 
 	}
 
 	// find the needed channel instance
-	message.setReceiverChannel(this->_channels);
-	Channel & targetChannel = message.getReceiverChannel();
+	//message.setReceiverChannel(this->_channels);
+	Channel & targetChannel = message.getReceiverChannel(this->_channels);
 
 	//Check for modes like +n (no external messages), +m (only voiced/operator users can speak), or +b (bans).
 
@@ -942,7 +944,7 @@ void	Server::welcomeMessages(Client &client)
 }
 
 // Added to return a const reference
-const std::map<int, Client> &Server::getClients(void) const {
+/* const */ std::map<int, Client> &Server::getClients(void) /* const */ {
 	return this->_clients;
 }
 
