@@ -189,9 +189,6 @@ int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 		return -1;
 	}
 
-	if (_channelModes.find('o') == std::string::npos) {
-		_channelModes += 'o';
-	}
 	return 0;
 }
 
@@ -341,8 +338,17 @@ int Channel::removeKeyFromChannel(std::vector<std::string> &args, Client &client
 		_channelModes.erase(it);
 	}
 
-	size_t paramIndex = findParamIndex('k');
+	int paramIndex = findParamIndex('k');
+	int paramIndexL = findParamIndex('l');
+	if (paramIndexL > paramIndex || paramIndexL == 0) {
+		paramIndex = 0;
+	}
+	else {
+		paramIndex = 1;
+	}
 	removeFromChannelParams(paramIndex);
+
+	_password = "";
 
 	return 0;
 }
@@ -357,18 +363,34 @@ int Channel::removeLimitFromChannel(std::vector<std::string> &args, Client &clie
 		_channelModes.erase(it);
 	}
 
-	//erase from Params
+	int paramIndex = findParamIndex('l');
+	int paramIndexK = findParamIndex('k');
+	if (paramIndexK > paramIndex || paramIndexK == 0) {
+		paramIndex = 0;
+	}
+	else {
+		paramIndex = 1;
+	}
+	removeFromChannelParams(paramIndex);
+
+	_user_limit = 0;
 
 	return 0;
 }
 		
 int Channel::removeOperatorFromChannel(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client, size_t &paramCount) {
+	
+	//check if user is in _operators
+	//this->removeOperator();
 
+	return 0;
 }
 
-size_t Channel::findParamIndex(char mode) {
-
+int Channel::findParamIndex(char mode) {
+	if (_channelModes.find(mode) == std::string::npos)
+		return 0;
+	return(_channelModes.find(mode));
 }
 
 void Channel::removeFromChannelParams(size_t paramIndex) {

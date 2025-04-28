@@ -53,7 +53,7 @@ class Channel {
 		int removeLimitFromChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
 		int	channelSendToClient(int fd, const std::string &msg);
-		size_t findParamIndex(char mode);
+		int findParamIndex(char mode);
 		void removeFromChannelParams(size_t paramIndex);
 		
 		private:
