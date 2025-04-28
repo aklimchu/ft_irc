@@ -458,7 +458,8 @@ void Server::part(Message & message, Client &client) {
 		// Send the full part msg to all the clients on that channel
 		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
 			sendToClient((*it)->getFd(), fullMsg);
-
+		if (channel.isOperator(&client)) // Check if the client is an op and needs to be removed
+			channel.removeOperator(&client);
 		channel.removeUser(&client); // Remove the client from the channel
 		client.leaveChannel(channelName); // Remove the channel from the clients list of channels
 		if (channel.getUsers().empty()) // If channel is left empty, remove it
@@ -594,6 +595,8 @@ void Server::quit(Message & message, Client &client) {
 		std::map<std::string, Channel>::iterator	it_2 = this->_channels.find(channelName);
 		if (it_2 != this->_channels.end())
 		{
+			if (it_2->second.isOperator(&client)) // If the client is an op on the channel, client gets removed
+				it_2->second.removeOperator(&client);
 			it_2->second.removeUser(&client);
 			if (it_2->second.getUsers().empty()) // If the channel is left empty, it gets removed
 				this->_channels.erase(it_2);
