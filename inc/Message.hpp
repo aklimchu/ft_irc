@@ -12,7 +12,7 @@
 class Message {
 	public:
 		Message(void) = delete;
-		Message(std::string buffer, const std::map<int, Client> &clients_map); // Changed to take a const reference
+		Message(std::string buffer, std::map<int, Client> &clients_map); // Changed to take a const reference
 		Message(Message const & src) = delete;
 		~Message(void) = default;
 
@@ -23,12 +23,12 @@ class Message {
 		const std::string& getCommand(void) const;
 		const std::string& getSender(void) const;
 		Client & getReceiverClient(void);
-		Channel & getReceiverChannel(void);
+		Channel & getReceiverChannel(std::map<std::string, Channel>	& _channels);
 		std::vector<std::string>& getBufferDivided(void);
 
 		void	setSender(const std::string &sender);
-		void	setReceiverClient(void);
-		void	setReceiverChannel(std::map<std::string, Channel>	& _channels);
+		/* void	setReceiverClient(void);
+		void	setReceiverChannel(std::map<std::string, Channel>	& _channels); */
 
 		class NoSuchNick : public std::exception {
 			public:
@@ -48,13 +48,13 @@ class Message {
 		std::string _buffer;
 		std::vector<std::string> _buffer_divided;
 		std::string _sender;
-		Client		_receiver_client;
-		Channel		_receiver_channel;
+		/* Client		& _receiver_client;
+		Channel		& _receiver_channel; */
 		// payload
 		std::string _command;
 		const std::vector<std::string> _function_names = \
 			{"PASS", "NICK", "USER", "JOIN", "PART", "TOPIC", "INVITE", \
 			"KICK", "QUIT", "MODE", "PRIVMSG", "PING", "CAP", "WHOIS", "WHO"};
-		const std::map<int, Client> &_clients_map;
+		/* const */ std::map<int, Client> &_clients_map;
 
 };
