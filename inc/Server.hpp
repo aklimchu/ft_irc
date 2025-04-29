@@ -68,7 +68,6 @@ class Server {
 		void	cap(Message &message, Client &client);
 		void	whois(Message &message, Client &client);
 		void	who(Message &message, Client &client);
-		//do we need oper function?
 
 		class SocketError : public std::exception {
 			public:

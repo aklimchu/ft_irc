@@ -25,10 +25,7 @@ class Message {
 		Client & getReceiverClient(void);
 		Channel & getReceiverChannel(std::map<std::string, Channel>	& _channels);
 		std::vector<std::string>& getBufferDivided(void);
-
 		void	setSender(const std::string &sender);
-		/* void	setReceiverClient(void);
-		void	setReceiverChannel(std::map<std::string, Channel>	& _channels); */
 
 		class NoSuchNick : public std::exception {
 			public:
@@ -48,9 +45,6 @@ class Message {
 		std::string _buffer;
 		std::vector<std::string> _buffer_divided;
 		std::string _sender;
-		/* Client		& _receiver_client;
-		Channel		& _receiver_channel; */
-		// payload
 		std::string _command;
 		const std::vector<std::string> _function_names = \
 			{"PASS", "NICK", "USER", "JOIN", "PART", "TOPIC", "INVITE", \

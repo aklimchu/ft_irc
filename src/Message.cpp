@@ -27,7 +27,7 @@ int Message::parseBuffer(void) {
 
 	if (std::size(_buffer) == 0)
 		return -1;
-	_buffer_divided = ft_split(_buffer, ' '); // do we need to explicitly delete?
+	_buffer_divided = ft_split(_buffer, ' ');
 	for (size_t i = 0; i < _function_names.size(); i++) {
 		if (this->_buffer_divided[0] == this->_function_names[i])
 			this->_command = this->_function_names[i];
@@ -43,14 +43,6 @@ const std::string & Message::getSender(void) const {
 	return(this->_sender);
 }
 
-/* Client & Message::getReceiverClient(void) {
-	return(this->_receiver_client);
-}
-
-Channel & Message::getReceiverChannel(void) {
-	return(this->_receiver_channel);
-} */
-
 std::vector<std::string> & Message::getBufferDivided(void) {
 	return(this->_buffer_divided);
 }
@@ -62,52 +54,19 @@ void	Message::setSender(const std::string &sender)
 
 Client & Message::getReceiverClient(void)
 {
-	/* std::pair<int, Client> found_pair;
-	bool found = false; */
-
-	/* for (const auto& pair : _clients_map) {
-		if (pair.second.getNickname() == _buffer_divided[1]) {
-			found_pair = pair;
-			found = true;
-			break;
-		}
-	} */
 	for (auto &pair : _clients_map) {
         if (pair.second.getNickname() == _buffer_divided[1]) {
-            return pair.second; // Return reference to Client
+            return pair.second;
         }
     }
 
     throw Message::NoSuchNick();
-
-	/* if (found) {
-		return (found_pair.second);
-    }
-	else { */
-		throw Message::NoSuchNick();
-	/* } */
 }
 
 Channel & Message::getReceiverChannel(std::map<std::string, Channel> & _channels) {
-	//std::pair<std::string, Channel> found_pair;
-	//bool found = false;
-
-	/* for (auto& pair : _channels) {
-		if (pair.first == _buffer_divided[1]) {
-			found_pair = pair;
-			found = true;
-			break;
-		}
-	} */
 	auto it = _channels.find(_buffer_divided[1]);
     if (it != _channels.end()) {
-        return it->second; // Return reference to Channel
+        return it->second;
     }
-
-	/* if (found) {
-		return (found_pair.second);
-    }
-	else { */
-		throw Message::NoSuchChannel();
-	/* } */
+	throw Message::NoSuchChannel();
 }

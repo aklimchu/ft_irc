@@ -657,8 +657,6 @@ void Server::mode(Message & message, Client &client) {
 	{
 		// find needed channel instance
 		try {
-			//message.setReceiverChannel(this->_channels);
-		
 			Channel & channel = message.getReceiverChannel(this->_channels);
 
 			// MODE with no parameters
@@ -670,19 +668,19 @@ void Server::mode(Message & message, Client &client) {
 			}
 			// Add/remove mode(s)
 			std::string	&mode = args[2];
+			std::string successfulChanges = "";
 			if (mode[0] == '+') {
-				std::string successfulChanges = channel.addChannelModes(args, _clients, client);
-				if (!successfulChanges.empty()) {
-					std::string senderPrefix = ":" + client.getNickname() + "!" + \
-						client.getUsername() + "@" + client.getHostname();
-					std::string toSend = senderPrefix + " MODE " + channel.getName() + \
-						" +" + successfulChanges + "\r\n"; 
-					this->sendToChannel(toSend, channel);
-				}
+				successfulChanges = channel.addChannelModes(args, _clients, client);
 			}
 			else if (mode[0] == '-') {
-				channel.removeChannelModes(args);
-				// send to channels users?
+				successfulChanges = channel.removeChannelModes(args, _clients, client);
+			}
+			if (!successfulChanges.empty()) {
+				std::string senderPrefix = ":" + client.getNickname() + "!" + \
+					client.getUsername() + "@" + client.getHostname();
+				std::string toSend = senderPrefix + " MODE " + channel.getName() + \
+					' ' + mode[0] + successfulChanges + "\r\n"; 
+				this->sendToChannel(toSend, channel);
 			}
 		}
 		catch (Message::NoSuchChannel & e) {
@@ -741,7 +739,6 @@ void Server::sendMessageToClient(std::vector<std::string> & args, Message & mess
 	}
 
 	// find needed client instance
-	//message.setReceiverClient();
 	Client & receiver = message.getReceiverClient();
 
 	// build a message
@@ -766,22 +763,8 @@ void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message 
 	}
 
 	// find the needed channel instance
-	//message.setReceiverChannel(this->_channels);
 	Channel & targetChannel = message.getReceiverChannel(this->_channels);
-
-	//Check for modes like +n (no external messages), +m (only voiced/operator users can speak), or +b (bans).
-
-	/* if (!targetChannel.isUserInChannel(&client)) {
-    sendToClient(client.getFd(), errCannotSendToChan(SERVER_NAME, client.getNickname(), targetChannel.getName()));
-    return;
-	}
-	if (targetChannel.hasMode('m') && !targetChannel.isVoiced(&client) && !targetChannel.isOperator(&client)) {
-	    sendToClient(client.getFd(), errCannotSendToChan(SERVER_NAME, client.getNickname(), targetChannel.getName()));
-	    return;
-	} */
-
 	const std::set<Client *> & targetUsers = targetChannel.getUsers();
-	
 	std::set<Client *>::iterator itr;
 
 	// send message to the clients who joined the channel

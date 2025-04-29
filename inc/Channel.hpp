@@ -8,6 +8,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <algorithm> // for find_if
 #include <sys/socket.h> // send()
 
 #define SERVER_NAME "ircserv"
@@ -35,15 +36,24 @@ class Channel {
 
 		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);
+		std::string removeChannelModes(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client);
+		void addITMode(const char & mode, std::string & successfulChangesMode);
 		int addOperatorToChannel(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
 		int addKeyToChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
 		int addLimitToChannel(std::vector<std::string> &args, Client &client, \
 			size_t &paramCount);
-		void removeChannelModes(std::vector<std::string> &args);
-		void addITMode(const char & mode, std::string & successfulChangesMode);
+		void removeITMode(const char & mode, std::string & successfulChangesMode);
+		int removeOperatorFromChannel(std::vector<std::string> &args, \
+			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
+		void removeKeyFromChannel(void);
+		void removeLimitFromChannel(void);
 		int	channelSendToClient(int fd, const std::string &msg);
+		int findParamIndex(char mode);
+		void removeFromChannelParams(int paramIndex);
+		std::vector<std::string> ft_split(std::string & line, const char & sep);
 		
 		private:
 			/*std::set<Client*>			_invite;
