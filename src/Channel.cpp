@@ -336,18 +336,9 @@ void Channel::removeKeyFromChannel(void) {
 	}
 	else {
 		int paramIndex = findParamIndex('k');
-		std::cout << "ParamIndex: " << paramIndex << std::endl;
 		removeFromChannelParams(paramIndex);
 		_channelModes.erase(it, 1);
 	}
-
-
-	/* int paramIndexL = findParamIndex('l');
-	if (paramIndexL == -1) {
-		_channelParams = "";
-	}
-	else { */
-	/* } */
 
 	_password = "";
 }
@@ -359,18 +350,9 @@ void Channel::removeLimitFromChannel(void) {
 	}
 	else {
 		int paramIndex = findParamIndex('l');
-		std::cout << "ParamIndex: " << paramIndex << std::endl;
 		removeFromChannelParams(paramIndex);
 		_channelModes.erase(it, 1);
 	}
-
-	/* int paramIndexK = findParamIndex('k');
-	if (paramIndexK > paramIndex || paramIndexK == -1) {
-		paramIndex = 0;
-	}
-	else {
-		paramIndex = 1;
-	} */
 
 	_user_limit = 0;
 }
@@ -409,9 +391,7 @@ int Channel::removeOperatorFromChannel(std::vector<std::string> &args, \
 }
 
 int Channel::findParamIndex(char mode) {
-/* 	if (_channelModes.find(mode) == std::string::npos)
-		return -1;
-	*/return(_channelModes.find(mode));
+	return(_channelModes.find(mode));
 }
 
 void Channel::removeFromChannelParams(int paramIndex) {
