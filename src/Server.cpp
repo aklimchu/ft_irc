@@ -664,7 +664,7 @@ void Server::mode(Message & message, Client &client) {
 			{
 				sendToClient(fd, rplChannelModeIs(SERVER_NAME, nick, channel.getName(), \
 					"+" + channel.getChannelModes()));
-				return ;
+				return;
 			}
 			// Add/remove mode(s)
 			std::string	&mode = args[2];
@@ -734,6 +734,9 @@ void Server::privmsg(Message & message, Client &client) {
 
 void Server::sendMessageToClient(std::vector<std::string> & args, Message & message, Client &client) {
 	std::string messageText = args[2];
+	for (size_t i = 3; i < args.size(); i++) {
+		messageText += ' ' + args[i];
+	}
 	if (messageText[0] == ':') {
     	messageText = messageText.substr(1);
 	}
@@ -758,6 +761,9 @@ void Server::sendMessageToClient(std::vector<std::string> & args, Message & mess
 
 void Server::broadcastMessageToChannel(std::vector<std::string> & args, Message & message, Client &client) {
 	std::string messageText = args[2];
+	for (size_t i = 3; i < args.size(); i++) {
+		messageText += ' ' + args[i];
+	}
 	if (messageText[0] == ':') {
     	messageText = messageText.substr(1);
 	}

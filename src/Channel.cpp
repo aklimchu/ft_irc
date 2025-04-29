@@ -87,6 +87,9 @@ std::string	Channel::addChannelModes(std::vector<std::string> &args, \
 	std::string successfulChangesMode = "";
 	std::string successfulChangesParam = "";
 
+	std::cout << "MODE string: " << mode << std::endl;
+	std::cout << "MODE length: " << mode.length() << std::endl;
+
 	// go symbol by symbol to add modes to the channel
 	for (size_t i = 1; i < mode.length(); i++) {
 		if (mode[i] != 'i' && mode[i] != 't' && mode[i] != 'k' && \

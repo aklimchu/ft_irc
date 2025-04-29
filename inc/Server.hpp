@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>
+
 #include <poll.h>
 #include <sys/socket.h>
 #include <cstring> // for memset
