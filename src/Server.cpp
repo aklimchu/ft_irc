@@ -560,7 +560,95 @@ void Server::kick(Message & message, Client &client) {
     //        ERR_BADCHANMASK                 ERR_CHANOPRIVSNEEDED
     //        ✓ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
 	std::cout << "KICK command by " << message.getSender() << std::endl;
-	(void)client;
+
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() < 3)
+	{
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "KICK"));
+		return ;
+	}
+
+	std::string	channelName = args[1];
+	std::string	targetNick = args[2];
+	std::string	kickMsg = "Kicked";
+
+	if (args.size() > 3) // Build a kick msg if it was sent
+	{
+		kickMsg = args[3];
+		if (kickMsg[0] == ':')
+			kickMsg.erase(0, 1);
+		for (size_t i = 4; i < args.size(); i++)
+			kickMsg += " " + args[i];
+	}
+
+	// Check if the channel exists
+	std::map<std::string, Channel>::iterator it = this->_channels.find(channelName);
+	if (it == this->_channels.end())
+	{
+		sendToClient(fd, errNoSuchChannel(SERVER_NAME, nick, channelName));
+		return ;
+	}
+
+	Channel	&channel = it->second;
+
+	// Check if the kicker is on the channel
+	if (!channel.isUser(&client))
+	{
+		sendToClient(fd, errNotOnChannel(SERVER_NAME, nick, channelName));
+		return ;
+	}
+	// Check if the kicker is an op
+	if (!channel.isOperator(&client))
+	{
+		sendToClient(fd, errChanOPrivNeeded(SERVER_NAME, nick, channelName));
+		return ;
+	}
+
+	Client	*targetClient = NULL;
+
+	// Search for the target client
+	for (std::map<int, Client>::iterator it_2 = this->_clients.begin(); it_2 != this->_clients.end(); it_2++)
+	{
+		if (it_2->second.getNickname() == targetNick)
+		{
+			targetClient = &(it_2->second);
+			break;
+		}
+	}
+	if (!targetClient)
+	{
+		sendToClient(fd, errNoSuchNick(SERVER_NAME, nick, targetNick));
+		return ;
+	}
+	// Check if the target is in the channel
+	if (!channel.isUser(targetClient))
+	{
+		sendToClient(fd, errUserNotInChannel(SERVER_NAME, nick, targetNick, channelName));
+		return ;
+	}
+
+	// Full msg
+	std::string	fullMsg = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
+		+ " KICK " + channelName + " " + targetNick + " :" + kickMsg + "\r\n";
+
+	const std::set<Client *>	&users = channel.getUsers();
+
+	// Send the full kick msg to all users in the channel
+	for (std::set<Client *>::const_iterator it_3 = users.begin(); it_3 != users.end(); it_3++)
+		sendToClient((*it_3)->getFd(), fullMsg);
+	// Remove the target client from the channel
+	channel.removeUser(targetClient);
+	// Remove the channel from the target clients own list
+	targetClient->leaveChannel(channelName);
+	// If target was an op in the channel, remove it
+	if (channel.isOperator(targetClient))
+		channel.removeOperator(targetClient);
+	// If the channel is left empty, delete it (only possible if the kicker kicked itself)
+	if (channel.getUsers().empty())
+		this->_channels.erase(channelName);
 };
 
 void Server::quit(Message & message, Client &client) {
