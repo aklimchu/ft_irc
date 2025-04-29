@@ -48,13 +48,12 @@ class Channel {
 		void removeITMode(const char & mode, std::string & successfulChangesMode);
 		int removeOperatorFromChannel(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client, size_t &paramCount);
-		int removeKeyFromChannel(std::vector<std::string> &args, Client &client, \
-			size_t &paramCount);
-		int removeLimitFromChannel(std::vector<std::string> &args, Client &client, \
-			size_t &paramCount);
+		void removeKeyFromChannel(void);
+		void removeLimitFromChannel(void);
 		int	channelSendToClient(int fd, const std::string &msg);
 		int findParamIndex(char mode);
-		void removeFromChannelParams(size_t paramIndex);
+		void removeFromChannelParams(int paramIndex);
+		std::vector<std::string> ft_split(std::string & line, const char & sep);
 		
 		private:
 			/*std::set<Client*>			_invite;

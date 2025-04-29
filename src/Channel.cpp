@@ -176,7 +176,6 @@ int Channel::addOperatorToChannel(std::vector<std::string> &args, \
 	for (const auto& result : _users) {
 		if (result && result->getNickname() == args[3 + paramCount - 1]) {
 			Client & client = *result;
-			client.setOperator(true); // do we need this?
 			this->setAsOperator(&client);
 			found = true;
 			break;
@@ -275,11 +274,13 @@ std::string Channel::removeChannelModes(std::vector<std::string> &args, \
 		}
 
 		// k, l
-		if (mode[i] == 'k' && removeKeyFromChannel(args, client, paramCount) == 0) {
+		if (mode[i] == 'k') {
+			removeKeyFromChannel();
 			successfulChangesMode += 'k';
 			continue;
 		}
-		if (mode[i] == 'l' && removeLimitFromChannel(args, client, paramCount) == 0) {
+		if (mode[i] == 'l') {
+			removeLimitFromChannel();
 			successfulChangesMode += 'l';
 			continue;
 		}
@@ -322,79 +323,109 @@ std::string Channel::removeChannelModes(std::vector<std::string> &args, \
 void Channel::removeITMode(const char & mode, std::string & successfulChangesMode) {
 	auto it = _channelModes.find(mode);
 	if (it != std::string::npos) {
-		_channelModes.erase(it);
+		_channelModes.erase(it, 1);
 	}
 	successfulChangesMode += mode;
 }
 
 
-int Channel::removeKeyFromChannel(std::vector<std::string> &args, Client &client, \
-	size_t &paramCount) {
+void Channel::removeKeyFromChannel(void) {
 	auto it = _channelModes.find('k');
 	if (it == std::string::npos) {
-		return 0;
+		return;
 	}
 	else {
-		_channelModes.erase(it);
+		int paramIndex = findParamIndex('k');
+		std::cout << "ParamIndex: " << paramIndex << std::endl;
+		removeFromChannelParams(paramIndex);
+		_channelModes.erase(it, 1);
 	}
 
-	int paramIndex = findParamIndex('k');
-	int paramIndexL = findParamIndex('l');
-	if (paramIndexL > paramIndex || paramIndexL == 0) {
-		paramIndex = 0;
+
+	/* int paramIndexL = findParamIndex('l');
+	if (paramIndexL == -1) {
+		_channelParams = "";
 	}
-	else {
-		paramIndex = 1;
-	}
-	removeFromChannelParams(paramIndex);
+	else { */
+	/* } */
 
 	_password = "";
-
-	return 0;
 }
 	
-int Channel::removeLimitFromChannel(std::vector<std::string> &args, Client &client, \
-	size_t &paramCount) {
+void Channel::removeLimitFromChannel(void) {
 	auto it = _channelModes.find('l');
 	if (it == std::string::npos) {
-		return 0;
+		return;
 	}
 	else {
-		_channelModes.erase(it);
+		int paramIndex = findParamIndex('l');
+		std::cout << "ParamIndex: " << paramIndex << std::endl;
+		removeFromChannelParams(paramIndex);
+		_channelModes.erase(it, 1);
 	}
 
-	int paramIndex = findParamIndex('l');
-	int paramIndexK = findParamIndex('k');
-	if (paramIndexK > paramIndex || paramIndexK == 0) {
+	/* int paramIndexK = findParamIndex('k');
+	if (paramIndexK > paramIndex || paramIndexK == -1) {
 		paramIndex = 0;
 	}
 	else {
 		paramIndex = 1;
-	}
-	removeFromChannelParams(paramIndex);
+	} */
 
 	_user_limit = 0;
-
-	return 0;
 }
 		
 int Channel::removeOperatorFromChannel(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client, size_t &paramCount) {
-	
-	//check if user is in _operators
-	//this->removeOperator();
+	// check if user exists on the server
+	auto it = std::find_if(serverUsers.begin(), serverUsers.end(),
+	[&args, paramCount](const std::pair<const int, Client> &pair) {
+		return pair.second.getNickname() == args[3 + paramCount - 1];
+	});
+	if (it == serverUsers.end()) {
+		channelSendToClient(client.getFd(), \
+			errNoSuchNick(SERVER_NAME, client.getNickname(), args[3 + paramCount - 1]));
+		return -1;
+	}
+
+	// check if user exists in the channel and update privileges
+	bool found = false;
+	for (const auto& result : _users) {
+		if (result && result->getNickname() == args[3 + paramCount - 1]) {
+			Client & client = *result;
+			this->removeOperator(&client);
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		channelSendToClient(client.getFd(), \
+			errUserNotInChannel(SERVER_NAME, client.getNickname(), \
+			args[3 + paramCount - 1], this->getName()));
+		return -1;
+	}
 
 	return 0;
 }
 
 int Channel::findParamIndex(char mode) {
-	if (_channelModes.find(mode) == std::string::npos)
-		return 0;
-	return(_channelModes.find(mode));
+/* 	if (_channelModes.find(mode) == std::string::npos)
+		return -1;
+	*/return(_channelModes.find(mode));
 }
 
-void Channel::removeFromChannelParams(size_t paramIndex) {
-
+void Channel::removeFromChannelParams(int paramIndex) {
+	std::vector<std::string> channelParamsDivided = ft_split(_channelParams, ' ');
+	std::cout << "Num of elem in vector: " << channelParamsDivided.size() << std::endl;
+	if (paramIndex == 0 && channelParamsDivided.size() == 2) {
+		_channelParams = channelParamsDivided[1];
+	}
+	else if (paramIndex == 0 && channelParamsDivided.size() == 1) {
+		_channelParams = "";
+	}
+	else {
+		_channelParams = channelParamsDivided[0];
+	}
 }
 
 int	Channel::channelSendToClient(int fd, const std::string &msg)
@@ -406,4 +437,18 @@ int	Channel::channelSendToClient(int fd, const std::string &msg)
 
 void Channel::removeOperator(Client* client) {
     _operators.erase(client);
+}
+
+std::vector<std::string> Channel::ft_split(std::string & line, const char & sep)
+{
+    std::vector<std::string> v;
+    size_t start;
+    size_t end = 0;
+
+    while ((start = line.find_first_not_of(sep, end)) != std::string::npos)
+    {
+        end = line.find(sep, start);
+        v.push_back(line.substr(start, end - start));
+    }
+    return v;
 }

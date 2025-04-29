@@ -20,7 +20,6 @@ class	Client
 		bool		_nicknameOK;
 		bool		_passwdOK;
 		bool		_hasQuit;
-		bool 		_isOperator;
 
 		std::set<std::string>	_channels;
 
@@ -57,8 +56,6 @@ class	Client
 		void	setUsernameOK(bool value);
 		void	setNicknameOK(bool value);
 		void	setHasQuit(bool value);
-		void	setOperator(bool op);
-    	bool	isOperator() const;
 
 		void							joinChannel(const std::string &channelName);
 		void							leaveChannel(const std::string &channelName);
