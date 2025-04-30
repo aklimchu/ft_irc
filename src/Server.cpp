@@ -820,6 +820,7 @@ void Server::mode(Message & message, Client &client) {
 			else if (mode[0] == '-') {
 				successfulChanges = channel.removeChannelModes(args, _clients, client);
 			}
+			// send information about changes to channel members
 			if (!successfulChanges.empty()) {
 				std::string senderPrefix = ":" + client.getNickname() + "!" + \
 					client.getUsername() + "@" + client.getHostname();

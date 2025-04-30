@@ -3,11 +3,9 @@
 //--------------------------------Constructors--------------------------------//
 
 Channel::Channel(): _channelModes(""), _channelParams(""), _user_limit(0), \
-	_password("") , _topic(""){}
+	_password("") , _topic("") {}
 Channel::Channel(const std::string &name) : _name(name), _channelModes(""), \
-	_channelParams(""), _user_limit(0), _password(""), _topic("")
-{
-}
+	_channelParams(""), _user_limit(0), _password(""), _topic("") {}
 
 //-------------------------------Member functions------------------------------//
 
@@ -414,8 +412,7 @@ void Channel::removeFromChannelParams(int paramIndex) {
 int	Channel::channelSendToClient(int fd, const std::string &msg)
 {
 	int bytesSent = send(fd, msg.c_str(), msg.length(), 0);
-	//std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
-	return bytesSent; // returning the number of bytes sent - for easier debugging
+	return bytesSent;
 }
 
 void Channel::removeOperator(Client* client) {
