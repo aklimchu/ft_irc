@@ -249,3 +249,19 @@ inline std::string errChanOPrivNeeded(const std::string& server, \
 		return ":" + server + " 482 " + nick + " " + \
 			channel + " :You're not channel operator\r\n";
 }
+
+// CHANNEL
+
+// 443    ERR_USERONCHANNEL
+inline std::string errUserOnChannel(const std::string& server, \
+	const std::string& nick, const std::string& target, const std::string& channel) {
+		return ":" + server + " 443 " + nick + " " + target + " " + \
+			channel + " :is already on channel\r\n";
+}
+
+// 341 RPL_INVITING
+inline std::string	rplInviting(const std::string &server, const std::string &nick, \
+	const std::string& target, const std::string& channel)
+{
+	return (":" + server + " 341 " + nick + " " + target + " " + channel + " :Welcome to the channel\r\n");
+}
