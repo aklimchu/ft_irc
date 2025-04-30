@@ -356,6 +356,10 @@ void Server::join(Message & message, Client &client) {
 	}
 
 	std::vector<std::string>	channels = message.ft_split(args[1], ',');
+	std::vector<std::string>	keys;
+
+	if (args.size() > 2) // Store the channel keys, if any were given
+		keys = message.ft_split(args[2], ',');
 
 	for (size_t i = 0; i < channels.size(); i++)
 	{
@@ -366,6 +370,41 @@ void Server::join(Message & message, Client &client) {
 		}
 		if (this->_channels[channels[i]].isUser(&client)) // For joining a channel, where already a member
 			continue;
+		// Check if a 'i' channel mode is set
+		if (this->_channels[channels[i]].getChannelModes().find('i') != this->_channels[channels[i]].getChannelModes().end())
+		{
+			// Check if the client is in the invited list
+			if (this->_channels[channels[i]].getInvitedUsers().find(&client) != this->_channels[channels[i]].getInvitedUsers().end())
+			{
+				sendToClient(fd, /*SOME_ERROR*/);
+				return ;
+			}
+			else // Remove the client from the invited list (or only after succesful join???)!!!
+				this->_channels[channels[i]].getInvitedUsers().erase(&client)
+		}
+		// Check if a 'k' channel mode is set
+		if (this->_channels[channels[i]].getChannelModes().find('k') != this->_channels[channels[i]].getChannelModes().end())
+		{
+			if (!keys[i].empty()) // Check if a key was even given
+			{
+				// Compare the key given, to the channel password
+				if (keys[i] != this->_channels[channels[i]].getPassword())
+				{
+					sendTpClient(fd, /*ERR_BADCHANNELKEY*/);
+					return ;
+				}
+			}
+		}
+		// Check if a 'l' channel mode is set
+		if (this->_channels[channels[i]].getChannelModes().find('l') != this->_channels[channels[i]].getChannelModes().end())
+		{
+			// Compare current users to the user limit
+			if (this->_channels[channels[i]].getUsers().size() >= this->_channels[channels[i]].getUserLimit())
+			{
+				sendToClient(fd, /*ERR_CHANNELISFULL*/);
+				return ;
+			}
+		}
 		this->_channels[channels[i]].addUser(&client);
 		client.joinChannel(channels[i]);
 		// If the client was the first channel member(creator), add it as an op
@@ -377,6 +416,8 @@ void Server::join(Message & message, Client &client) {
 		std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
 			+ " JOIN :" + channels[i] + "\r\n";
 		const std::set<Client *>	&users = this->_channels[channels[i]].getUsers();
+
+		// ADD THE REMOVAL OF AN INVITED CLIENT FROM THE _invitedUsers(in Channel class)!!!
 
 		for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
 			sendToClient((*it)->getFd(), str);
