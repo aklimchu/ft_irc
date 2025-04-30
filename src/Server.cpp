@@ -1131,16 +1131,3 @@ void Server::sendToChannel(const std::string &message, Channel &channel) {
         }
     }
 }
-
-/* void Server::removeClient(int fd) {
-    auto it = _clients.find(fd);
-    if (it != _clients.end()) {
-        Client* clientPtr = &it->second;
-        for (auto& [name, channel] : _channels) {
-            channel.removeUser(clientPtr);
-            channel.removeOperator(clientPtr);
-        }
-        _clients.erase(it);
-    }
-} */
-// When a client disconnects, remove their Client* from all _users and _operators sets:
