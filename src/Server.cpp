@@ -591,7 +591,64 @@ void Server::invite(Message & message, Client &client) {
     //        ERR_CHANOPRIVSNEEDED
     //        RPL_INVITING                    RPL_AWAY
 	std::cout << "INVITE command by " << message.getSender() << std::endl;
-	(void)client;
+	int							fd = client.getFd();
+	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
+	std::vector<std::string>	&args = message.getBufferDivided();
+
+	if (args.size() < 3)
+	{
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "INVITE"));
+		return;
+	}
+
+	// check if channel exists
+	auto it = _channels.find(args[2]);
+    if (it == _channels.end()) {
+		sendToClient(fd, errNoSuchChannel(SERVER_NAME, nick, args[2]));
+		return;
+	}
+	Channel &targetChannel = it->second;
+
+	// check if caller is in the channel
+    if (!targetChannel.isUser(&client)) {
+		sendToClient(fd, errNotOnChannel(SERVER_NAME, nick, args[2]));
+		return;
+	}
+
+	// check if caller is op
+	if (!targetChannel.isOperator(&client)) {
+        sendToClient(fd, errChanOPrivNeeded(SERVER_NAME, nick, args[2]));
+		return;
+	}
+
+	// check if target user exists in network
+	auto it4 = std::find_if(this->_clients.begin(), _clients.end(),
+	[&args](const std::pair<const int, Client> &pair) {
+		return pair.second.getNickname() == args[1];
+	});
+	if (it4 == _clients.end()) {
+		sendToClient(fd, errNoSuchNick(SERVER_NAME, nick, args[1]));
+		return;
+	}
+	Client &targetUser = it4->second;
+
+	// check if target user is already on channel 
+	if (targetChannel.isUser(&targetUser)) {
+        sendToClient(fd, errUserOnChannel(SERVER_NAME, nick, targetUser.getNickname(), args[2]));
+		return;
+	}
+
+	// check if target user is already in the list of invited users
+	auto it5 = targetChannel.getInvitedUsers().find(&targetUser);
+    if (it5 != targetChannel.getInvitedUsers().end()) {
+		return;
+	}
+
+	// add target user to list on invited users in the channel
+	targetChannel.addInvite(&client);
+
+	// send an invitation to target user to join the channel
+	sendToClient(targetUser.getFd(), rplInviting(SERVER_NAME, nick, targetUser.getNickname(), args[2]));
 };
 
 void Server::kick(Message & message, Client &client) {

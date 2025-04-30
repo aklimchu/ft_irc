@@ -30,11 +30,14 @@ class Channel {
 		bool						isOperator(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
 		const std::string			getChannelModes() const;
+		const std::set<Client *>	&getInvitedUsers() const;
 		const std::string			&getTopic() const;
 		const std::string			&getPassword() const;
 		size_t						getUserLimit() const;
 		void						setTopic(const std::string &str);
 		void						setAsOperator(Client *client);
+		void						addInvite(Client *client);
+		void						removeInvite(Client *client);
 
 		std::string addChannelModes(std::vector<std::string> &args, \
 			std::map<int, Client> &serverUsers, Client &client);
@@ -58,8 +61,7 @@ class Channel {
 		std::vector<std::string> ft_split(std::string & line, const char & sep);
 		
 		private:
-			/*std::set<Client*>			_invite;
-			std::set<Client*>			_voice; */
+			std::set<Client*>			_invitedUsers;
 			std::string					_name;
 			std::set<Client *>			_users;
 			std::string					_channelModes;

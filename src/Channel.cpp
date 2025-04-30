@@ -443,3 +443,15 @@ const std::string &	Channel::getPassword() const {
 size_t	Channel::getUserLimit() const {
 	return this->_user_limit;
 }
+
+void	Channel::addInvite(Client *client) {
+	this->_invitedUsers.insert(client);
+}
+
+void	Channel::removeInvite(Client *client) {
+	this->_invitedUsers.erase(client);
+}
+
+const std::set<Client *>	&Channel::getInvitedUsers() const {
+	return (this->_invitedUsers);
+}
