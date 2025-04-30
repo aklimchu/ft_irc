@@ -31,6 +31,8 @@ class Channel {
 		const std::set<Client *>	&getUsers() const;
 		const std::string			getChannelModes() const;
 		const std::string			&getTopic() const;
+		const std::string			&getPassword() const;
+		size_t						getUserLimit() const;
 		void						setTopic(const std::string &str);
 		void						setAsOperator(Client *client);
 

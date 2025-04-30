@@ -435,3 +435,11 @@ std::vector<std::string> Channel::ft_split(std::string & line, const char & sep)
     }
     return v;
 }
+
+const std::string &	Channel::getPassword() const {
+	return this->_password;
+}
+
+size_t	Channel::getUserLimit() const {
+	return this->_user_limit;
+}
