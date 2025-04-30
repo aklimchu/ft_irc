@@ -356,6 +356,10 @@ void Server::join(Message & message, Client &client) {
 	}
 
 	std::vector<std::string>	channels = message.ft_split(args[1], ',');
+	std::vector<std::string>	keys;
+
+	if (args.size() > 2) // Store the channel keys, if any were given
+		keys = message.ft_split(args[2], ',');
 
 	for (size_t i = 0; i < channels.size(); i++)
 	{
@@ -364,29 +368,66 @@ void Server::join(Message & message, Client &client) {
 		{
 			this->_channels[channels[i]] = Channel(channels[i]);
 		}
-		if (this->_channels[channels[i]].isUser(&client)) // For joining a channel, where already a member
-			continue;
-		this->_channels[channels[i]].addUser(&client);
-		client.joinChannel(channels[i]);
-		// If the client was the first channel member(creator), add it as an op
-		if (this->_channels[channels[i]].getUsers().size() == 1) 
-			this->_channels[channels[i]].setAsOperator(&client);
 
+		Channel	&channel = this->_channels[channels[i]];
+
+		if (channel.isUser(&client)) // For joining a channel, where already a member
+			continue;
+		// Check if a 'i' channel mode is set
+		if (channel.getChannelModes().find('i') != std::string::npos)
+		{
+			// Check if the client is in the invited list
+			if (channel.getInvitedUsers().find(&client) == channel.getInvitedUsers().end())
+			{
+				sendToClient(fd, errInviteOnlyChan(SERVER_NAME, nick, channels[i]));
+				continue ;
+			}
+		}
+		// Check if a 'k' channel mode is set
+		if (channel.getChannelModes().find('k') != std::string::npos)
+		{
+			// Check if key was even given, and compare it to the channel password
+			if (i >= keys.size() || keys[i] != channel.getPassword())
+			{
+				sendToClient(fd, errBadChannelKey(SERVER_NAME, nick, channels[i]));
+				continue ;
+			}
+		}
+		// Check if a 'l' channel mode is set
+		if (channel.getChannelModes().find('l') != std::string::npos)
+		{
+			// Compare current users to the user limit
+			if (channel.getUsers().size() >= channel.getUserLimit())
+			{
+				sendToClient(fd, errChannelIsFull(SERVER_NAME, nick, channels[i]));
+				continue ;
+			}
+		}
+		channel.addUser(&client);
+		client.joinChannel(channels[i]);
+		channel.removeInvite(&client); // After succesful join, the invite has to be removed
+		// If the client was the first channel member(creator), add it as an op
+		if (channel.getUsers().size() == 1) 
+			channel.setAsOperator(&client);
 	
 		// JOIN message to all channel members
 		std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
 			+ " JOIN :" + channels[i] + "\r\n";
-		const std::set<Client *>	&users = this->_channels[channels[i]].getUsers();
+		const std::set<Client *>	&users = channel.getUsers();
 
 		for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
 			sendToClient((*it)->getFd(), str);
+
+		// If the channel topic is set, send RPL_TOPIC to the joiner
+		if (!channel.getTopic().empty())
+			sendToClient(fd, rplTopic(SERVER_NAME, nick, channels[i], channel.getTopic()));
 
 		// Handle sending 353 RPL_NAMREPLY and 366 RPL_ENDOFNAMES
 		// Add "@" prefix to operator names?
 		std::string	names;
 		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
 		{
-			if (this->_channels[channels[i]].isOperator(*it))
+			if (channel.isOperator(*it))
 				names += '@';
 			names += (*it)->getNickname() + " ";
 		}
