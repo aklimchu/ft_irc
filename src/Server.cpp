@@ -368,66 +368,66 @@ void Server::join(Message & message, Client &client) {
 		{
 			this->_channels[channels[i]] = Channel(channels[i]);
 		}
-		if (this->_channels[channels[i]].isUser(&client)) // For joining a channel, where already a member
+
+		Channel	&channel = this->_channels[channels[i]];
+
+		if (channel.isUser(&client)) // For joining a channel, where already a member
 			continue;
 		// Check if a 'i' channel mode is set
-		if (this->_channels[channels[i]].getChannelModes().find('i') != this->_channels[channels[i]].getChannelModes().end())
+		if (channel.getChannelModes().find('i') != std::string::npos)
 		{
 			// Check if the client is in the invited list
-			if (this->_channels[channels[i]].getInvitedUsers().find(&client) != this->_channels[channels[i]].getInvitedUsers().end())
+			if (channel.getInvitedUsers().find(&client) == channel.getInvitedUsers().end())
 			{
-				sendToClient(fd, /*SOME_ERROR*/);
-				return ;
+				sendToClient(fd, errInviteOnlyChan(SERVER_NAME, nick, channels[i]));
+				continue ;
 			}
-			else // Remove the client from the invited list (or only after succesful join???)!!!
-				this->_channels[channels[i]].getInvitedUsers().erase(&client)
 		}
 		// Check if a 'k' channel mode is set
-		if (this->_channels[channels[i]].getChannelModes().find('k') != this->_channels[channels[i]].getChannelModes().end())
+		if (channel.getChannelModes().find('k') != std::string::npos)
 		{
-			if (!keys[i].empty()) // Check if a key was even given
+			// Check if key was even given, and compare it to the channel password
+			if (i >= keys.size() || keys[i] != channel.getPassword())
 			{
-				// Compare the key given, to the channel password
-				if (keys[i] != this->_channels[channels[i]].getPassword())
-				{
-					sendTpClient(fd, /*ERR_BADCHANNELKEY*/);
-					return ;
-				}
+				sendToClient(fd, errBadChannelKey(SERVER_NAME, nick, channels[i]));
+				continue ;
 			}
 		}
 		// Check if a 'l' channel mode is set
-		if (this->_channels[channels[i]].getChannelModes().find('l') != this->_channels[channels[i]].getChannelModes().end())
+		if (channel.getChannelModes().find('l') != std::string::npos)
 		{
 			// Compare current users to the user limit
-			if (this->_channels[channels[i]].getUsers().size() >= this->_channels[channels[i]].getUserLimit())
+			if (channel.getUsers().size() >= channel.getUserLimit())
 			{
-				sendToClient(fd, /*ERR_CHANNELISFULL*/);
-				return ;
+				sendToClient(fd, errChannelIsFull(SERVER_NAME, nick, channels[i]));
+				continue ;
 			}
 		}
-		this->_channels[channels[i]].addUser(&client);
+		channel.addUser(&client);
 		client.joinChannel(channels[i]);
+		channel.removeInvite(&client); // After succesful join, the invite has to be removed
 		// If the client was the first channel member(creator), add it as an op
-		if (this->_channels[channels[i]].getUsers().size() == 1) 
-			this->_channels[channels[i]].setAsOperator(&client);
-
+		if (channel.getUsers().size() == 1) 
+			channel.setAsOperator(&client);
 	
 		// JOIN message to all channel members
 		std::string	str = ":" + nick + "!" + client.getUsername() + "@" + client.getHostname()
 			+ " JOIN :" + channels[i] + "\r\n";
-		const std::set<Client *>	&users = this->_channels[channels[i]].getUsers();
-
-		// ADD THE REMOVAL OF AN INVITED CLIENT FROM THE _invitedUsers(in Channel class)!!!
+		const std::set<Client *>	&users = channel.getUsers();
 
 		for (std::set<Client *>::iterator it = users.begin(); it != users.end(); it++)
 			sendToClient((*it)->getFd(), str);
+
+		// If the channel topic is set, send RPL_TOPIC to the joiner
+		if (!channel.getTopic().empty())
+			sendToClient(fd, rplTopic(SERVER_NAME, nick, channels[i], channel.getTopic()));
 
 		// Handle sending 353 RPL_NAMREPLY and 366 RPL_ENDOFNAMES
 		// Add "@" prefix to operator names?
 		std::string	names;
 		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
 		{
-			if (this->_channels[channels[i]].isOperator(*it))
+			if (channel.isOperator(*it))
 				names += '@';
 			names += (*it)->getNickname() + " ";
 		}

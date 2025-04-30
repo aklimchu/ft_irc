@@ -229,6 +229,24 @@ inline std::string	errNotOnChannel(const std::string &server, const std::string 
 	return (":" + server + " 442 " + nick + " " + channel + " :You're not on that channel\r\n");
 }
 
+// 471 ERR_CHANNELISFULL
+inline std::string	errChannelIsFull(const std::string &serverName, const std::string &nick, const std::string &channel)
+{
+	return (":" + serverName + " 471 " + nick + " " + channel + " :Cannot join channel (+l)\r\n");
+}
+
+// 473 ERR_INVITEONLYCHAN
+inline std::string	errInviteOnlyChan(const std::string &serverName, const std::string &nick, const std::string &channel)
+{
+	return (":" + serverName + " 473 " + nick + " " + channel + " :Cannot join channel (+i)\r\n");
+}
+
+// 475 ERR_BADCHANNELKEY
+inline std::string	errBadChannelKey(const std::string &serverName, const std::string &nick, const std::string &channel)
+{
+	return (":" + serverName + " 475 " + nick + " " + channel + " :Cannot join channel (+k)\r\n");
+}
+
 //472    ERR_UNKNOWNMODE
 inline std::string errUnknownMode(const std::string& server, \
 	const std::string& nick, const char& mode, const std::string& channel) {
