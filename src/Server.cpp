@@ -604,7 +604,7 @@ void Server::invite(Message & message, Client &client) {
 	}
 
 	// add target user to list on invited users in the channel
-	targetChannel.addInvite(&client);
+	targetChannel.addInvite(&targetUser);
 
 	// send an invitation to target user to join the channel
 	sendToClient(targetUser.getFd(), rplInviting(SERVER_NAME, nick, targetUser.getNickname(), args[2]));
