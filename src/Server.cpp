@@ -29,7 +29,7 @@ void Server::closeFds(void) {
 void	Server::setNonBlock(int fd)
 {
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-		std::cerr << "Error: setNonBlock()" << std::endl; //
+		throw std::runtime_error("Error: fcntl() failed in setNonBlock()");
 }
 
 void Server::initServer(char *argv[]) {
@@ -59,7 +59,7 @@ void	Server::handleNewClient()
 	int	client_socket = accept(this->_sockfd, NULL, NULL);
 
 	if (client_socket < 0)
-		std::cerr << "Error: accept()" << std::endl; //
+		throw std::runtime_error("Error: accept() failed in handleNewClient()");
 
 	this->setNonBlock(client_socket);
 
@@ -148,7 +148,7 @@ void Server::startServer(void)
 		int	ready_fds = poll(this->_pollFds.data(), this->_pollFds.size(), -1);
 
 		if (ready_fds < 0)
-			std::cerr << "Error: poll()" << std::endl; //
+			throw std::runtime_error("Error: poll() failed in startServer()");
 
 		for (size_t i = 0; i < this->_pollFds.size(); i++)
 		{
@@ -471,8 +471,6 @@ void Server::part(Message & message, Client &client) {
 	{
 		std::string	&channelName = channels[i];
 
-		//if (channelName[0] != '#') // NOT necessary?!?!
-			//channelName = '#' + channelName;
 		// Check if the channel exists
 		if (this->_channels.find(channelName) == this->_channels.end())
 		{
@@ -1022,9 +1020,7 @@ void	Server::whois(Message &message, Client &client)
 
 	if (args.size() < 2)
 	{
-		//sendToClient(fd, errNoNicknameGiven(SERVER_NAME, nick));
-		// ERR_NEEDMOREPARAMS ???
-		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "WHOIS")); // Correct?
+		sendToClient(fd, errNeedMoreParams(SERVER_NAME, nick, "WHOIS"));
 		return ;
 	}
 
@@ -1110,7 +1106,10 @@ void	Server::who(Message &message, Client &client)
 int	Server::sendToClient(int fd, const std::string &msg)
 {
 	int bytesSent = send(fd, msg.c_str(), msg.length(), 0);
-	std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
+	if (bytesSent < 0) // in error case, recv() returning 0 will clean up the client
+		std::cerr << "send() failed to send to fd: " << fd << std::endl;
+	else
+		std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
 	return bytesSent; // returning the number of bytes sent - for easier debugging
 }
 
