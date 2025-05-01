@@ -363,7 +363,7 @@ void Server::join(Message & message, Client &client) {
 
 	for (size_t i = 0; i < channels.size(); i++)
 	{
-		// If it doesnt exist, create it (the first member should be set as operator?)
+		// If it doesnt exist, create it (the first member should be set as operator)
 		if (this->_channels.find(channels[i]) == this->_channels.end())
 		{
 			this->_channels[channels[i]] = Channel(channels[i]);
@@ -423,7 +423,7 @@ void Server::join(Message & message, Client &client) {
 			sendToClient(fd, rplTopic(SERVER_NAME, nick, channels[i], channel.getTopic()));
 
 		// Handle sending 353 RPL_NAMREPLY and 366 RPL_ENDOFNAMES
-		// Add "@" prefix to operator names?
+		// Add "@" prefix to operator names
 		std::string	names;
 		for (std::set<Client *>::const_iterator it = users.begin(); it != users.end(); it++)
 		{
@@ -788,6 +788,9 @@ void Server::quit(Message & message, Client &client) {
 				this->_channels.erase(it_2);
 		}
 	}
+	// Remove any invitations to any channel, since the client wont exist anymore
+	for (std::map<std::string, Channel>::iterator it_3 = this->_channels.begin(); it_3 != this->_channels.end(); it_3++)
+		it_3->second.removeInvite(&client);
 	client.setHasQuit(true);
 };
 
