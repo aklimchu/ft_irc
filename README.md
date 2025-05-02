@@ -29,7 +29,7 @@
 - **Reference Client**: Tested for compatibility with **irssi**, ensuring a seamless user experience.
 
 ## 📋 Requirements 
-- **Compiler**: A C++98-compliant compiler (e.g., `clang++` or `g++`).
+- **Compiler**: A C++20-compliant compiler (e.g., `clang++` or `g++`).
 - **Operating System**: Linux or macOS (developed and tested on Linux).
 - **Dependencies**: Standard C++ library and POSIX socket libraries (no external dependencies).
 - **IRC Client**: An IRC client like **irssi** or **nc** (netcat) for testing.
@@ -97,12 +97,10 @@ The server implements the following IRC commands (based on RFC 1459/2812 and pro
 | `JOIN`        | Joins a specified channel (creates it if it doesn't exist).                 |
 | `PART`        | Leaves a specified channel.                                                |
 | `PRIVMSG`     | Sends private messages to a user or channel.                                |
-| `NOTICE`      | Sends notices to a user or channel (no auto-replies).                       |
 | `MODE`        | Sets or removes channel/user modes (e.g., `+i`, `+t`, `+k`, `+o`, `+l`).    |
 | `KICK`        | Removes a user from a channel (operator-only).                             |
 | `INVITE`      | Invites a user to a channel (operator-only).                               |
 | `TOPIC`       | Sets or views the topic of a channel.                                      |
-| `OPER`        | Grants operator privileges to a user with the correct credentials.          |
 | `QUIT`        | Terminates the client’s connection to the server.                          |
 | `PING`        | Checks connection latency with the server.                                  |
 
@@ -117,8 +115,6 @@ The server implements the following IRC commands (based on RFC 1459/2812 and pro
 - `i`: Invisible mode.
 - `o`: Operator status.
 
-**Note**: Additional commands or modes may be implemented as bonus features. Check the project source or contact the author for details.
-
 ## 🧪 Testing 
 - **Basic Testing with Netcat**:
   Connect using `nc -C localhost <port>` and send raw IRC commands to verify server responses. Example:
@@ -132,9 +128,6 @@ The server implements the following IRC commands (based on RFC 1459/2812 and pro
 
 - **Comprehensive Testing with Irssi**:
   Use **irssi** to test all features, including channel management, operator commands, and message broadcasting. Ensure replies match the expected format for an official IRC server.
-
-- **Debugging**:
-  Run `make debug` (if available) to compile with debug flags and print server I/O to stdout for troubleshooting.
 
 - **Valgrind**:
   Check for memory leaks:
