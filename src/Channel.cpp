@@ -22,6 +22,7 @@ Channel & Channel::operator=(Channel const & rhs) {
 		this->_password = rhs.getPassword();
 		this->_topic = rhs.getTopic();
 	}
+	return (*this);
 }
 
 //-------------------------------Member functions------------------------------//
