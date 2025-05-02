@@ -13,9 +13,7 @@
 - [Usage](#usage)
 - [Supported Commands](#supported-commands)
 - [Testing](#testing)
-- [Contributing](#contributing)
 - [License](#license)
-- [Acknowledgements](#acknowledgements)
 
 ## 🌟 Features 
 - **Multi-client Support**: Handles multiple client connections simultaneously using a single `poll()` for non-blocking I/O.
