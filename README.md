@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-complete-brightgreen.svg)
 
-`ft_irc` is an Internet Relay Chat (IRC) server implemented in C++98 as part of the 42 school curriculum. This project focuses on creating a robust, standards-compliant IRC server that supports multiple simultaneous client connections, non-blocking I/O operations, and core IRC functionalities. The server adheres to the IRC protocol (primarily RFC 1459 and RFC 2812) and is designed to work seamlessly with official IRC clients such as **irssi** 📡.
+`ft_irc` is an Internet Relay Chat (IRC) server implemented in C++20 as part of the 42 school curriculum. This project focuses on creating a robust, standards-compliant IRC server that supports multiple simultaneous client connections, non-blocking I/O operations, and core IRC functionalities. The server adheres to the IRC protocol (primarily RFC 2812) and is designed to work seamlessly with official IRC clients such as **irssi** 📡.
 
 ## 📚 Table of Contents
 - [Features](#features)
