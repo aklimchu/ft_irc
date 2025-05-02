@@ -1,4 +1,4 @@
-🚀 # ft_irc 
+# 🚀 ft_irc 
 
 ![C++](https://img.shields.io/badge/C++-98-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
@@ -6,7 +6,7 @@
 
 `ft_irc` is an Internet Relay Chat (IRC) server implemented in C++98 as part of the 42 school curriculum. This project focuses on creating a robust, standards-compliant IRC server that supports multiple simultaneous client connections, non-blocking I/O operations, and core IRC functionalities. The server adheres to the IRC protocol (primarily RFC 1459 and RFC 2812) and is designed to work seamlessly with official IRC clients such as **irssi** 📡.
 
-📚 ## Table of Contents
+## 📚 Table of Contents
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -17,7 +17,7 @@
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
 
-🌟 ## Features 
+## 🌟 Features 
 - **Multi-client Support**: Handles multiple client connections simultaneously using a single `poll()` for non-blocking I/O.
 - **TCP/IP Communication**: Utilizes TCP/IP (IPv4) for reliable client-server communication.
 - **Authentication**: Supports password-based connection authentication 🔒.
@@ -30,14 +30,14 @@
 - **Error Handling**: Provides appropriate error replies for invalid commands or unauthorized actions.
 - **Reference Client**: Tested for compatibility with **irssi**, ensuring a seamless user experience.
 
-📋 ## Requirements 
+## 📋 Requirements 
 - **Compiler**: A C++98-compliant compiler (e.g., `clang++` or `g++`).
 - **Operating System**: Linux or macOS (developed and tested on Linux).
 - **Dependencies**: Standard C++ library and POSIX socket libraries (no external dependencies).
 - **IRC Client**: An IRC client like **irssi** or **nc** (netcat) for testing.
 - **Build Tool**: `make` for compiling the project.
 
-🛠️ ## Installation 
+## 🛠️ Installation 
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/aklimchu/ft_irc.git
@@ -56,7 +56,7 @@
    - Remove object files and executable: `make fclean`
    - Recompile from scratch: `make re`
 
-📲 ## Usage 
+## 📲 Usage 
 1. **Start the Server**:
    Run the server with a specified port and password:
    ```bash
@@ -88,7 +88,7 @@
 3. **Interact with the Server**:
    Once connected, use standard IRC commands to authenticate, join channels, send messages, and manage the server. See [Supported Commands](#supported-commands) for details.
 
-📜 ## Supported Commands 
+## 📜 Supported Commands 
 The server implements the following IRC commands (based on RFC 1459/2812 and project requirements):
 
 | Command       | Description                                                                 |
@@ -121,7 +121,7 @@ The server implements the following IRC commands (based on RFC 1459/2812 and pro
 
 **Note**: Additional commands or modes may be implemented as bonus features. Check the project source or contact the author for details.
 
-🧪 ## Testing 
+## 🧪 Testing 
 - **Basic Testing with Netcat**:
   Connect using `nc -C localhost <port>` and send raw IRC commands to verify server responses. Example:
   ```
