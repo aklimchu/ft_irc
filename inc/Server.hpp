@@ -6,7 +6,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <cstring> // for memset
-#include <netinet/in.h> // for sockaddr_in, htons
+#include <netinet/in.h> // for htons
 #include <unistd.h> // for close
 #include <signal.h>
 #include <algorithm> // for std::find_if
