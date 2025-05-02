@@ -35,7 +35,7 @@ const std::string	&Client::getRealname() const
 	return (this->_realname);
 }
 
-/*const*/ std::string	&Client::getBuffer() /*const*/
+std::string	&Client::getBuffer()
 {
 	return (this->_buffer);
 }

@@ -4,41 +4,29 @@
 
 Channel::Channel(): _channelModes(""), _channelParams(""), _user_limit(0), \
 	_password("") , _topic("") {}
+
 Channel::Channel(const std::string &name) : _name(name), _channelModes(""), \
 	_channelParams(""), _user_limit(0), _password(""), _topic("") {}
 
+//-------------------------Copy assignment operator---------------------------//
+
+Channel & Channel::operator=(Channel const & rhs) {
+	if (this != &rhs) {
+		this->_invitedUsers = rhs.getInvitedUsers();
+		this->_name = rhs.getName();
+		this->_users = rhs.getUsers();
+		this->_channelModes = rhs.getChannelModes();
+		this->_channelParams = rhs.getChannelParams();
+		this->_operators = rhs.getOperators();
+		this->_user_limit = rhs.getUserLimit();
+		this->_password = rhs.getPassword();
+		this->_topic = rhs.getTopic();
+	}
+}
+
 //-------------------------------Member functions------------------------------//
 
-const std::string	&Channel::getName() const
-{
-	return (this->_name);
-}
-
-void	Channel::addUser(Client *client)
-{
-	this->_users.insert(client);
-}
-
-void	Channel::removeUser(Client *client)
-{
-	this->_users.erase(client);
-}
-
-bool	Channel::isUser(Client *client) const
-{
-	if (_users.find(client) != _users.end())
-		return (true);
-	else
-		return (false);
-}
-
-bool	Channel::isOperator(Client *client) const
-{
-	if (this->_operators.find(client) != this->_operators.end())
-		return (true);
-	else
-		return (false);
-}
+// GETTERS
 
 const	std::set<Client *>	&Channel::getUsers() const
 {
@@ -57,6 +45,49 @@ const std::string	&Channel::getTopic(void) const
 	return (this->_topic);
 }
 
+const std::string	&Channel::getName() const
+{
+	return (this->_name);
+}
+
+const std::set<Client *>	&Channel::getInvitedUsers() const {
+	return (this->_invitedUsers);
+}
+
+const std::string	Channel::getChannelParams() const {
+	return (this->_channelParams);
+}
+
+const std::set<Client *>	&Channel::getOperators() const {
+	return (this->_operators);
+}
+
+const std::string &	Channel::getPassword() const {
+	return this->_password;
+}
+
+size_t	Channel::getUserLimit() const {
+	return this->_user_limit;
+}
+
+bool	Channel::isUser(Client *client) const
+{
+	if (_users.find(client) != _users.end())
+		return (true);
+	else
+		return (false);
+}
+
+bool	Channel::isOperator(Client *client) const
+{
+	if (this->_operators.find(client) != this->_operators.end())
+		return (true);
+	else
+		return (false);
+}
+
+// SETTERS
+
 void	Channel::setTopic(const std::string &str)
 {
 	this->_topic = str;
@@ -66,6 +97,30 @@ void	Channel::setAsOperator(Client *client)
 {
 	this->_operators.insert(client);
 }
+
+void	Channel::addUser(Client *client)
+{
+	this->_users.insert(client);
+}
+
+void	Channel::removeUser(Client *client)
+{
+	this->_users.erase(client);
+}
+
+void	Channel::addInvite(Client *client) {
+	this->_invitedUsers.insert(client);
+}
+
+void	Channel::removeInvite(Client *client) {
+	this->_invitedUsers.erase(client);
+}
+
+void Channel::removeOperator(Client* client) {
+    _operators.erase(client);
+}
+
+// OTHER FUNCTIONS
 
 std::string	Channel::addChannelModes(std::vector<std::string> &args, \
 	std::map<int, Client> &serverUsers, Client &client) {
@@ -415,10 +470,6 @@ int	Channel::channelSendToClient(int fd, const std::string &msg)
 	return bytesSent;
 }
 
-void Channel::removeOperator(Client* client) {
-    _operators.erase(client);
-}
-
 std::vector<std::string> Channel::ft_split(std::string & line, const char & sep)
 {
     std::vector<std::string> v;
@@ -433,22 +484,3 @@ std::vector<std::string> Channel::ft_split(std::string & line, const char & sep)
     return v;
 }
 
-const std::string &	Channel::getPassword() const {
-	return this->_password;
-}
-
-size_t	Channel::getUserLimit() const {
-	return this->_user_limit;
-}
-
-void	Channel::addInvite(Client *client) {
-	this->_invitedUsers.insert(client);
-}
-
-void	Channel::removeInvite(Client *client) {
-	this->_invitedUsers.erase(client);
-}
-
-const std::set<Client *>	&Channel::getInvitedUsers() const {
-	return (this->_invitedUsers);
-}

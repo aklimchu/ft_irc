@@ -3,8 +3,6 @@
 
 bool Server::_signal_received = false;
 
-//Server::Server() : _sockfd(-1) {}
-
 Server::Server(std::string passwd) : _sockfd(-1), _server_passwd(passwd) {};
 
 void Server::handleSignals(int num) {
@@ -127,7 +125,7 @@ void	Server::handleOldClient(size_t &i)
 			try {
 				this->executeCommand(line, client);
 			}
-			catch (std::exception &) { // Added the reference...
+			catch (std::exception &) {
 				throw;
 			}
 		}
@@ -160,7 +158,7 @@ void Server::startServer(void)
 					try {
 						this->handleOldClient(i);
 					}
-					catch (std::exception &) { // Added the reference...
+					catch (std::exception &) {
 						throw;
 					}
 				}
@@ -196,9 +194,6 @@ void	Server::executeCommand(const std::string &buffer, Client &client)
 }
 
 void Server::pass(Message & message, Client &client) {
-	// Numeric Replies:
-
-	// ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
 	int			fd = client.getFd();
 	std::string	nick = client.getNickname().empty() ? "*" : client.getNickname();
 
@@ -224,12 +219,6 @@ void Server::pass(Message & message, Client &client) {
 
 
 void Server::nick(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ERR_NONICKNAMEGIVEN             ERR_ERRONEUSNICKNAME
-    //        ERR_NICKNAMEINUSE               ERR_NICKCOLLISION
-    //        ERR_UNAVAILRESOURCE             ERR_RESTRICTED
-
 	int			fd = client.getFd();
 	std::string	nick = client.getNickname().empty() ? "*" : client.getNickname();
 
@@ -288,9 +277,6 @@ void Server::nick(Message & message, Client &client) {
 };
 
 void Server::user(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NEEDMOREPARAMS              ERR_ALREADYREGISTRED
 	std::cout << "USER command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -335,14 +321,6 @@ void Server::user(Message & message, Client &client) {
 };
 
 void Server::join(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NEEDMOREPARAMS              ERR_BANNEDFROMCHAN
-    //        ERR_INVITEONLYCHAN              ERR_BADCHANNELKEY
-    //        ERR_CHANNELISFULL               ERR_BADCHANMASK
-    //        ERR_NOSUCHCHANNEL               ERR_TOOMANYCHANNELS
-    //        ERR_TOOMANYTARGETS              ERR_UNAVAILRESOURCE
-    //        RPL_TOPIC
 	std::cout << "JOIN command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -439,10 +417,6 @@ void Server::join(Message & message, Client &client) {
 };
 
 void Server::part(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
-    //        ERR_NOTONCHANNEL
 	std::cout << "PART command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -507,11 +481,6 @@ void Server::part(Message & message, Client &client) {
 };
 
 void Server::topic(Message & message, Client &client) {
-	// Numeric Replies:
-
-	// ✓ERR_NEEDMOREPARAMS              ERR_NOTONCHANNEL
-	// RPL_NOTOPIC                     RPL_TOPIC
-	// ERR_CHANOPRIVSNEEDED            ERR_NOCHANMODES
 	std::cout << "TOPIC command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -582,12 +551,6 @@ void Server::topic(Message & message, Client &client) {
 };
 
 void Server::invite(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHNICK
-    //        ERR_NOTONCHANNEL                ERR_USERONCHANNEL
-    //        ERR_CHANOPRIVSNEEDED
-    //        RPL_INVITING                    RPL_AWAY
 	std::cout << "INVITE command by " << message.getSender() << std::endl;
 	int							fd = client.getFd();
 	std::string					nick = client.getNickname().empty() ? "*" : client.getNickname();
@@ -650,11 +613,6 @@ void Server::invite(Message & message, Client &client) {
 };
 
 void Server::kick(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NEEDMOREPARAMS              ERR_NOSUCHCHANNEL
-    //        ERR_BADCHANMASK                 ERR_CHANOPRIVSNEEDED
-    //        ✓ERR_USERNOTINCHANNEL            ERR_NOTONCHANNEL
 	std::cout << "KICK command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -793,18 +751,6 @@ void Server::quit(Message & message, Client &client) {
 };
 
 void Server::mode(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NEEDMOREPARAMS              ✓ERR_USERSDONTMATCH
-    //        ✓ERR_UMODEUNKNOWNFLAG            ✓RPL_UMODEIS
-		// 	  ✓ERR_KEYSET
-        //    ERR_NOCHANMODES                 ERR_CHANOPRIVSNEEDED
-        //    ✓ERR_USERNOTINCHANNEL            ✓ERR_UNKNOWNMODE
-        //    ✓RPL_CHANNELMODEIS
-        //    RPL_BANLIST                     RPL_ENDOFBANLIST
-        //    RPL_EXCEPTLIST                  RPL_ENDOFEXCEPTLIST
-        //    RPL_INVITELIST                  RPL_ENDOFINVITELIST
-        //    RPL_UNIQOPIS
 	std::cout << "MODE command by " << message.getSender() << std::endl;
 
 	int							fd = client.getFd();
@@ -881,13 +827,6 @@ void Server::mode(Message & message, Client &client) {
 };
 
 void Server::privmsg(Message & message, Client &client) {
-	// Numeric Replies:
-
-    //        ✓ERR_NORECIPIENT                 ✓ERR_NOTEXTTOSEND
-    //        ✓ERR_CANNOTSENDTOCHAN            ✓ERR_NOTOPLEVEL
-    //        ✓ERR_WILDTOPLEVEL                ✓ERR_TOOMANYTARGETS
-    //        ✓ERR_NOSUCHNICK
-    //        ✓RPL_AWAY
 	std::cout << "PRIVMSG command by " << message.getSender() << std::endl;
 	std::vector<std::string>	&args = message.getBufferDivided();
 
@@ -1110,7 +1049,7 @@ int	Server::sendToClient(int fd, const std::string &msg)
 		std::cerr << "send() failed to send to fd: " << fd << std::endl;
 	else
 		std::cout << "Sent to fd: " << fd << " message: " << msg; // Debug
-	return bytesSent; // returning the number of bytes sent - for easier debugging
+	return bytesSent;
 }
 
 void	Server::welcomeMessages(Client &client)
@@ -1126,8 +1065,7 @@ void	Server::welcomeMessages(Client &client)
 	sendToClient(fd, rplMyInfo(SERVER_NAME, nick, userModes, channelModes));
 }
 
-// Added to return a const reference
-/* const */ std::map<int, Client> &Server::getClients(void) /* const */ {
+std::map<int, Client> &Server::getClients(void) {
 	return this->_clients;
 }
 

@@ -20,7 +20,7 @@ class Channel {
 		Channel(Channel const & src) = delete;
 		~Channel(void) = default;
 
-		//Channel & operator=(Channel const & rhs) = delete;
+		Channel & operator=(Channel const & rhs);
 
 		const std::string			&getName() const;
 		void						addUser(Client *client);
@@ -30,7 +30,9 @@ class Channel {
 		bool						isOperator(Client *client) const;
 		const std::set<Client *>	&getUsers() const;
 		const std::string			getChannelModes() const;
+		const std::string			getChannelParams() const;
 		const std::set<Client *>	&getInvitedUsers() const;
+		const std::set<Client *>	&getOperators() const;
 		const std::string			&getTopic() const;
 		const std::string			&getPassword() const;
 		size_t						getUserLimit() const;
