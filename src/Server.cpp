@@ -49,7 +49,7 @@ void Server::initServer(char *argv[]) {
 		throw ListeningError();
 	}
 
-	this->setNonBlock(this->_sockfd);
+	//this->setNonBlock(this->_sockfd); // For MacOS
 }
 
 void	Server::handleNewClient()
@@ -59,7 +59,7 @@ void	Server::handleNewClient()
 	if (client_socket < 0)
 		throw std::runtime_error("Error: accept() failed in handleNewClient()");
 
-	this->setNonBlock(client_socket);
+	//this->setNonBlock(client_socket);  // For MacOS
 
 	pollfd	new_client;
 	std::memset(&new_client, 0, sizeof(new_client));
