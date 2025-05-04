@@ -12,7 +12,7 @@
 class Message {
 	public:
 		Message(void) = delete;
-		Message(std::string buffer, std::map<int, Client> &clients_map); // Changed to take a const reference
+		Message(std::string buffer, std::map<int, Client> &clients_map);
 		Message(Message const & src) = delete;
 		~Message(void) = default;
 

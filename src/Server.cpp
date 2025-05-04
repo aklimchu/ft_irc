@@ -16,8 +16,8 @@ void Server::closeFds(void) {
 	if (this->_sockfd != -1) {
 		close(this->_sockfd);
 	}
-	// close client fds
-	for(size_t i = 1; i < this->_pollFds.size(); i++) //i has to start from 1(_sockfd is the first element in _pollFds)!
+	// close client fds (i has to start from 1, because _sockfd is the first element in _pollFds!)
+	for(size_t i = 1; i < this->_pollFds.size(); i++)
 	{
 		if (this->_pollFds[i].fd > -1)
 			close(this->_pollFds[i].fd);
@@ -185,7 +185,7 @@ void	Server::executeCommand(const std::string &buffer, Client &client)
         try {
 			(this->*(it->second))(message_received, client);
 		}
-		catch (std::exception &) { // Added the reference...
+		catch (std::exception &) {
 			throw;
 		}
     } else {
@@ -1033,7 +1033,7 @@ void	Server::who(Message &message, Client &client)
 		std::string	flags = "H"; // Placeholder? (H is "Here", G is "Gone"). Add "@" to mark operator status?
 		std::string	hopcountAndRealname = "0 " + user->getRealname();
 
-		if (channel.isOperator(user))
+		if (channel.isOperator(user)) // Adds the "@" prefix, if operator
 			flags += "@";
 		sendToClient(fd, rplWhoReply(SERVER_NAME, nick, channelName, user->getUsername(),
 			user->getHostname(), SERVER_NAME, user->getNickname(), flags, hopcountAndRealname));
