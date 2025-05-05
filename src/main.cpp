@@ -17,7 +17,7 @@ int main (int argc, char *argv[]) {
 		irc_server.startServer();
 	}
 	catch (std::exception & e) {
-		irc_server.closeFds(); // do we need to close fds if no exception?
+		irc_server.closeFds();
 		std::cerr << e.what() << std::endl;
 	}
 }
