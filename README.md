@@ -1,6 +1,6 @@
 # 🚀 ft_irc 
 
-![C++](https://img.shields.io/badge/C++-98-blue.svg)
+![C++](https://img.shields.io/badge/C++-20-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-complete-brightgreen.svg)
 
